@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "big-num",
+        "repositoryURL": "https://github.com/adam-fowler/big-num",
+        "state": {
+          "branch": null,
+          "revision": "2e2c8ca0bac44d7788f1bb1552967361634a9e8d",
+          "version": "1.1.1"
+        }
+      },
+      {
+        "package": "swift-crypto",
+        "repositoryURL": "https://github.com/apple/swift-crypto",
+        "state": {
+          "branch": null,
+          "revision": "d67ac68d09a95443303e9d6e37b34e7ba101d5f1",
+          "version": "1.0.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
