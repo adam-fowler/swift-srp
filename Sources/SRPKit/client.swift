@@ -51,7 +51,7 @@ public struct SRPClient<H: HashFunction> {
         var a = BigNum()
         var A = BigNum()
         repeat {
-            a = BigNum(bytes: SymmetricKey(size: .bits128))
+            a = BigNum(bytes: SymmetricKey(size: .bits256))
             A = configuration.g.power(a, modulus: configuration.N)
         } while A % configuration.N == BigNum(0)
 

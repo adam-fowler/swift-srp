@@ -96,7 +96,7 @@ extension SRPServer {
         var privateKey = BigNum()
         var publicKey = BigNum()
         repeat {
-            privateKey = BigNum(bytes: [UInt8].random(count: 128))
+            privateKey = BigNum(bytes: SymmetricKey(size: .bits256))
             publicKey = (configuration.k * v + configuration.g.power(privateKey, modulus: configuration.N)) % configuration.N
         } while publicKey % configuration.N == BigNum(0)
         
