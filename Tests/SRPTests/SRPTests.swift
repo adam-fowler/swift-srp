@@ -8,9 +8,9 @@ final class srpTests: XCTestCase {
     func testSRPSharedSecret() {
         let username = "adamfowler"
         let password = "testpassword"
-        let configuration = SRPConfiguration<SHA256>(.N2048)
-        let client = SRPClient<SHA256>(configuration: configuration)
-        let server = SRPServer<SHA256>(configuration: configuration)
+        let configuration = SRPConfiguration<Insecure.SHA1>(.N2048)
+        let client = SRPClient<Insecure.SHA1>(configuration: configuration)
+        let server = SRPServer<Insecure.SHA1>(configuration: configuration)
         
         let values = client.generateSaltAndVerifier(username: username, password: password)
         
@@ -30,7 +30,7 @@ final class srpTests: XCTestCase {
     func testVerifySRP() {
         let username = "adamfowler"
         let password = "testpassword"
-        let configuration = SRPConfiguration<SHA256>(.N2048)
+        let configuration = SRPConfiguration<SHA256>(.N1024)
         let client = SRPClient<SHA256>(configuration: configuration)
         let server = SRPServer<SHA256>(configuration: configuration)
         
@@ -55,24 +55,15 @@ final class srpTests: XCTestCase {
         }
     }
     
-    func testIsSafePrime( _ number: BigNum) {
-        XCTAssertTrue(number.isPrime(numChecks: 10000))
-        XCTAssertTrue(((number-1)/2).isPrime(numChecks: 10000))
-    }
-    func testIsPrime() {
-        print(512)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N512.number)
-        print(1024)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N1024.number)
-        print(1536)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N1536.number)
-        print(2048)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N2048.number)
-        print(3072)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N3072.number)
-        print(4096)
-        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N4096.number)
-    }
+/*    func testRFC5054() {
+        let I = "alice"
+        let password = "password123"
+        let salt = "BEB25379D1A8581EB5A727673A2441EE"
+        let configuration = SRPConfiguration<Insecure.SHA1>(.N1024)
+        print(configuration.N.hex)
+        print(configuration.g.hex)
+        XCTAssertEqual(configuration.k.hex, "7556AA045AEF2CDD07ABAF0F665C3E818913186F")
+    }*/
     
     static var allTests = [
         ("testSRPSharedSecret", testSRPSharedSecret),

@@ -87,9 +87,7 @@ public struct SRPClient<H: HashFunction> {
     /// - Returns: tuple containing salt and password verifier
     public func generateSaltAndVerifier(username: String, password: String) -> (salt: [UInt8], verifier: SRPKey) {
         let salt = [UInt8].random(count: 16)
-        let message = [UInt8]("\(username):\(password)".utf8)
-        let x = BigNum(bytes: [UInt8](H.hash(data: SRP<H>.pad(salt) + H.hash(data: message))))
-        let verifier = configuration.g.power(x, modulus: configuration.N)
+        let verifier = generatePasswordVerifier(username: username, password: password, salt: salt)
         return (salt: salt, verifier: SRPKey(verifier))
     }
 }
@@ -113,5 +111,13 @@ extension SRPClient {
         let S = (serverPublicKey - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(privateKeyNumber + u * x, modulus: configuration.N)
         
         return [UInt8](H.hash(data: SRP<H>.pad(S.bytes)))
+    }
+    
+    /// generate password verifier
+    public func generatePasswordVerifier(username: String, password: String, salt: [UInt8]) -> BigNum {
+        let message = [UInt8]("\(username):\(password)".utf8)
+        let x = BigNum(bytes: [UInt8](H.hash(data: SRP<H>.pad(salt) + H.hash(data: message))))
+        let verifier = configuration.g.power(x, modulus: configuration.N)
+        return verifier
     }
 }
