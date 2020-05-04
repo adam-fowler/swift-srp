@@ -2,7 +2,19 @@ import BigNum
 import Crypto
 import Foundation
 
-/// struct managing the client side of Secure Remote Password
+/// Manages the client side of Secure Remote Password
+///
+/// Secure Remote Password (SRP) provides username and password authentication without needing to provide your password to the server. The server
+/// has a cryptographic verifier that is derived from the password and a salt that was used to generate this verifier. Both client and server
+/// generate a shared secret then the client sends a proof they have the secret and if it is correct the server will do the same to verify the
+/// server as well.
+///
+/// This version is compliant with SRP version  6a and RFC 5054.
+///
+/// Reference reading
+/// - https://tools.ietf.org/html/rfc2945
+/// - https://tools.ietf.org/html/rfc5054
+///
 public struct SRPClient<H: HashFunction> {
     /// Errors thrown by SRPClient
     enum Error: Swift.Error {
@@ -57,11 +69,14 @@ public struct SRPClient<H: HashFunction> {
     /// - Returns: The client verification code which should be passed to the server
     public func calculateClientVerificationCode(username: String, password: String, state: inout AuthenticationState, serverPublicKey: SRPKey, salt: [UInt8]) throws -> [UInt8] {
         guard let serverPublicKeyNumber = serverPublicKey.number else { throw Error.invalidServerCode }
+        
         // get shared secret
-        let sharedSecret = try getSharedSecret(username: username, password: password, state: state, serverPublicKey: serverPublicKeyNumber, salt: salt)
-        state.sharedSecret = sharedSecret
+        let sharedSecret = try getSharedSecret(username: username, password: password, clientPublicKey: state.publicKey, clientPrivateKey: state.privateKey, serverPublicKey: serverPublicKeyNumber, salt: salt)
+        
+        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
+        state.sharedSecret = hashSharedSecret
         // get verification code
-        let verificationCode = SRP<H>.calculateClientVerification(configuration: configuration, username: username, salt: salt, clientPublicKey: state.publicKey, serverPublicKey: serverPublicKey, sharedSecret: sharedSecret)
+        let verificationCode = SRP<H>.calculateClientVerification(configuration: configuration, username: username, salt: salt, clientPublicKey: state.publicKey, serverPublicKey: serverPublicKey, hashSharedSecret: hashSharedSecret)
         state.verifyCode = verificationCode
         return verificationCode
     }
@@ -94,29 +109,29 @@ public struct SRPClient<H: HashFunction> {
 
 extension SRPClient {
     /// return shared secret given the username, password, B value and salt from the server
-    func getSharedSecret(username: String, password: String, state: AuthenticationState, serverPublicKey: BigNum, salt: [UInt8]) throws -> [UInt8] {
-        guard let privateKeyNumber = state.privateKey.number else { throw Error.internalError }
+    func getSharedSecret(username: String, password: String, clientPublicKey: SRPKey, clientPrivateKey: SRPKey, serverPublicKey: BigNum, salt: [UInt8]) throws -> BigNum {
+        guard let clientPrivateKeyNumber = clientPrivateKey.number else { throw Error.internalError }
         guard serverPublicKey % configuration.N != BigNum(0) else { throw Error.nullServerKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
-        let u = BigNum(bytes: [UInt8].init(H.hash(data: SRP<H>.pad(state.publicKey.bytes) + SRP<H>.pad(serverPublicKey.bytes))))
-        
+        let u = SRP<H>.calculateU(clientPublicKey: clientPublicKey.bytes, serverPublicKey: serverPublicKey.bytes, pad: configuration.sizeN)
+
         guard u != 0 else { throw Error.nullServerKey }
         
         // calculate x = H(salt | H(poolName | userId | ":" | password))
         let message = Data("\(username):\(password)".utf8)
-        let x = BigNum(bytes: [UInt8].init(H.hash(data: SRP<H>.pad(salt) + H.hash(data: message))))
+        let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         
         // calculate S = (B - k*g^x)^(a+u*x)
-        let S = (serverPublicKey - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(privateKeyNumber + u * x, modulus: configuration.N)
+        let S = (serverPublicKey - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientPrivateKeyNumber + u * x, modulus: configuration.N)
         
-        return [UInt8](H.hash(data: SRP<H>.pad(S.bytes)))
+        return S
     }
     
     /// generate password verifier
     public func generatePasswordVerifier(username: String, password: String, salt: [UInt8]) -> BigNum {
         let message = [UInt8]("\(username):\(password)".utf8)
-        let x = BigNum(bytes: [UInt8](H.hash(data: SRP<H>.pad(salt) + H.hash(data: message))))
+        let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         let verifier = configuration.g.power(x, modulus: configuration.N)
         return verifier
     }
