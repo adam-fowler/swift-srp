@@ -2,17 +2,30 @@ import BigNum
 import Crypto
 import Foundation
 
+/// SRP Configuration. The same configuration hast to be used by both client and server.
+/// Contains a large safe prime N ie a prime where the value (N-1)/2 is also a prime
+/// g the multiplicative group generator and the value k = Hash(N | g)
 public struct SRPConfiguration<H: HashFunction> {
     public let N: BigNum
     public let g: BigNum
     public let k: BigNum
-    public let infoKey: [UInt8]
-
-    init(_ prime: Prime, infoKey: String = "Derived Key") {
+    
+    /// Initialise SRPConfiguration with known safe prime
+    /// - Parameter prime: enum indicating size of prime
+    init(_ prime: Prime) {
         self.N = prime.number
         self.g = BigNum(2)
-        self.k = BigNum(data: [UInt8](H.hash(data: SRP<H>.pad(self.N.bytes) + self.g.bytes)))
-        self.infoKey = [UInt8](infoKey.utf8)
+        self.k = BigNum(bytes: [UInt8](H.hash(data: SRP<H>.pad(self.N.bytes) + self.g.bytes)))
+    }
+    
+    /// Initialise SRPConfiguration with your own prime and multiplicative group generator
+    /// - Parameters:
+    ///   - N: Large prime
+    ///   - g: multiplicative group generator (usually 2)
+    init(N: BigNum, g: BigNum) {
+        self.N = N
+        self.g = g
+        self.k = BigNum(bytes: [UInt8](H.hash(data: SRP<H>.pad(self.N.bytes) + self.g.bytes)))
     }
     
     enum Prime {
@@ -21,6 +34,7 @@ public struct SRPConfiguration<H: HashFunction> {
         case N1536
         case N2048
         case N3072
+        case N4096
         
         var number: BigNum {
             switch self {
@@ -102,6 +116,41 @@ public struct SRPConfiguration<H: HashFunction> {
                     + "aff5c4679972e487250096f44b53877f"
                     + "0eb1fbee921bc8bdd181068f27769ccd"
                     + "073fa7e9dcecccb65c0c602c01ebdcdb")!
+                
+            case .N4096:
+                return BigNum(hex:
+                    "00d9d860a549dc4c86f91a42d345e531f5"
+                    + "4dde6deb888624a6f54ec0ee73d350a6"
+                    + "beba38fc1eccb174e66ae52fb901d040"
+                    + "13eaefab87314b25fb40822d41cd1b37"
+                    + "8c80c4018811c8caf5268184903d68fa"
+                    + "0ae27f04ad5f51309eb23ba0fc023000"
+                    + "f05903f4e5591baf47eb8db71619bcf6"
+                    + "be47282f3db13926bddcf408c9327cbe"
+                    + "75f33de6a5714f2b864509692c17195d"
+                    + "017a6cbdf00726d1713d8262d9caba89"
+                    + "9874f97a2ca3c48ea13fed456a861e85"
+                    + "20d309c56d33469d0541a55c05d8e50f"
+                    + "7295ad71b65f6699a941a322f49f2e97"
+                    + "bcedad0376d9a5cc46f9012f069cbf38"
+                    + "5de73b4e701e9641417a6015ada9e382"
+                    + "516ee569528c3411da85c1f7a6e87981"
+                    + "5fa609b73885df9668932190fe06b281"
+                    + "8796d18e5ff2c01888cf08d8288a32a0"
+                    + "6816d05e83b65aa53d8b5550df2aeee4"
+                    + "dec9df397ce25f0a0dcfd6160c0bdc48"
+                    + "619ac43aab68ce73e84cdb8ed2799713"
+                    + "9454e8c6ed0d62ae1dcac6842dba6cf9"
+                    + "78307092e83ae85f53cea0ed280d383c"
+                    + "381a32daff546aa9ba8beb0e5456b891"
+                    + "51bf5b5ba6eaa2f25840a1ae75a47409"
+                    + "9a20ef5197e08adbb2c85b2c4de16db7"
+                    + "d205167d85951f7f3b6dd4e1535dcddd"
+                    + "c54961299172b34bdfc858872399738d"
+                    + "4517cb18b4a9ec27a20e67bf766f0609"
+                    + "b89b4fd1c3797505ed368e706a2aea04"
+                    + "3756331c772044403074b4ebd81e1c22"
+                    + "881baac1b14e3ab972ed5f9879b7e8bb")!
             }
         }
     }

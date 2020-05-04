@@ -1,19 +1,9 @@
 import XCTest
 import BigNum
 import Crypto
-@testable import SRP
+@testable import SRPKit
 
 final class srpTests: XCTestCase {
-    func testHKDF() {
-        let password = "password".data(using: .utf8)!
-        let salt = "salt".data(using: .utf8)!
-        let info = "HKDF key derivation".data(using: .utf8)!
-        
-        let sha1Result = SRP<Insecure.SHA1>.HKDF(seed: password, info: info, salt: salt, count: Insecure.SHA1.Digest.byteCount)
-        XCTAssertEqual(sha1Result.hexdigest().uppercased(), "9912F20853DFF1AFA944E9B88CA63C410CBB1938")
-        let sha256Result = SRP<SHA256>.HKDF(seed: password, info: info, salt: salt, count: 16)
-        XCTAssertEqual(sha256Result.hexdigest().uppercased(), "398F838A6019FC27D99D90009A1FE0BF")
-    }
 
     func testSRPSharedSecret() {
         let username = "adamfowler"
@@ -29,7 +19,7 @@ final class srpTests: XCTestCase {
         do {
             let serverValues = try server.initiateAuthentication(clientPublicKey: clientState.publicKey, verifier: values.verifier)
 
-            let sharedSecret = try client.getSharedSecret(username: username, password: password, state: clientState, serverPublicKey: serverValues.serverPublicKey, salt: values.salt)
+            let sharedSecret = try client.getSharedSecret(username: username, password: password, state: clientState, serverPublicKey: serverValues.serverPublicKey.number!, salt: values.salt)
 
             XCTAssertEqual(sharedSecret, serverValues.sharedSecret)
         } catch {
@@ -80,9 +70,12 @@ final class srpTests: XCTestCase {
         testIsSafePrime(SRPConfiguration<SHA256>.Prime.N2048.number)
         print(3072)
         testIsSafePrime(SRPConfiguration<SHA256>.Prime.N3072.number)
+        print(4096)
+        testIsSafePrime(SRPConfiguration<SHA256>.Prime.N4096.number)
     }
     
     static var allTests = [
-        ("testHKDF", testHKDF),
+        ("testSRPSharedSecret", testSRPSharedSecret),
+        ("testVerifySRP", testVerifySRP),
     ]
 }

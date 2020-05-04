@@ -8,14 +8,16 @@ public struct SRPServer<H: HashFunction> {
     enum Error: Swift.Error {
         /// the modulus of the client key and N generated a zero
         case nullClientKey
-        /// client verification code was wrong
+        /// client verification code was invalid or wrong
         case invalidClientCode
+        /// password verifier code was invalid
+        case invalidPasswordVerifier
     }
     
     /// Authentication state. Stores A,B and shared secret
     public struct AuthenticationState {
-        let clientPublicKey: BigNum
-        let serverPublicKey: BigNum
+        let clientPublicKey: SRPKey
+        let serverPublicKey: SRPKey
         var sharedSecret: [UInt8]
     }
     
@@ -34,20 +36,22 @@ public struct SRPServer<H: HashFunction> {
     ///   - verifier: Password verifier, stored with user instead of password
     /// - Throws: nullClientKey
     /// - Returns: The authentication state. The B value of the state should be returned to the client, the state should be stored for when the client responds
-    public func initiateAuthentication(clientPublicKey: BigNum, verifier: BigNum) throws -> AuthenticationState {
-        guard clientPublicKey % configuration.N != BigNum(0) else { throw Error.nullClientKey }
+    public func initiateAuthentication(clientPublicKey: SRPKey, verifier: SRPKey) throws -> AuthenticationState {
+        guard let clientPublicKeyNumber = clientPublicKey.number else { throw Error.invalidClientCode }
+        guard let verifierNumber = verifier.number else { throw Error.invalidClientCode }
+        guard clientPublicKeyNumber % configuration.N != BigNum(0) else { throw Error.nullClientKey }
 
-        let (privateKey,publicKey) = generateKeys(v: verifier)
+        let (privateKey,publicKey) = generateKeys(v: verifierNumber)
         
         // calculate u = H(clientPublicKey | serverPublicKey)
-        let u = BigNum(data: [UInt8].init(H.hash(data: SRP<H>.pad(clientPublicKey.bytes) + SRP<H>.pad(publicKey.bytes))))
+        let u = BigNum(bytes: [UInt8].init(H.hash(data: SRP<H>.pad(clientPublicKey.bytes) + SRP<H>.pad(publicKey.bytes))))
         
         // calculate S
-        let S = (clientPublicKey * verifier.power(u, modulus: configuration.N)).power(privateKey, modulus: configuration.N)
+        let S = (clientPublicKeyNumber * verifierNumber.power(u, modulus: configuration.N)).power(privateKey, modulus: configuration.N)
         
         let sharedSecret = H.hash(data: SRP<H>.pad(S.bytes))
         
-        return AuthenticationState(clientPublicKey: clientPublicKey, serverPublicKey: publicKey, sharedSecret: [UInt8](sharedSecret))
+        return AuthenticationState(clientPublicKey: clientPublicKey, serverPublicKey: SRPKey(publicKey), sharedSecret: [UInt8](sharedSecret))
     }
     
     /// verify code sent by client and return a server verification code. If verification fails a `invalidClientCode` error is thrown
@@ -72,7 +76,7 @@ extension SRPServer {
         var privateKey = BigNum()
         var publicKey = BigNum()
         repeat {
-            privateKey = BigNum(data: SRP<H>.HKDF(seed: Data([UInt8].random(count: 128)), info: configuration.infoKey, salt: Data(), count: 128))
+            privateKey = BigNum(bytes: [UInt8].random(count: 128))
             publicKey = configuration.k * v + configuration.g.power(privateKey, modulus: configuration.N)
         } while publicKey % configuration.N == BigNum(0)
         
