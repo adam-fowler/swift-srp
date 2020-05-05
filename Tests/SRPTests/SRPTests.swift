@@ -3,7 +3,7 @@ import BigNum
 import Crypto
 @testable import SRPKit
 
-final class srpTests: XCTestCase {
+final class SRPTests: XCTestCase {
 
     func testSRPSharedSecret() {
         let username = "adamfowler"
@@ -79,37 +79,6 @@ final class srpTests: XCTestCase {
         testVerifySRP(configuration: SRPConfiguration<SHA384>(N: BigNum(37), g: BigNum(3)))
     }
 
-    func testAgainstSRPToolsOutput() throws {
-        let username = "alice"
-        let password = "password123"
-        let configuration = SRPConfiguration<Insecure.SHA1>(.N1024)
-        let client = SRPClient<Insecure.SHA1>(configuration: configuration)
-
-        XCTAssertEqual(configuration.k.hex, "7556aa045aef2cdd07abaf0f665c3e818913186f")
-
-        let salt = "09402374d871f4bd".bytes(using: .hexadecimal)!
-        let verifier = client.generatePasswordVerifier(username: username, password: password, salt: salt)
-
-        XCTAssertEqual(verifier, BigNum(hex: "bb56edd31f4f7a007643210937a4b60e19f98d65cba1b1719216e8d5911b9fa7179093571117b0dce2c63f3ee6a83b3995e745842ab39398c7131efd1ebc870844f69f8b799950d3ae00aa2f93f6eb22d3f03e84d1c576c7cac347e24fef90f90c108ce2dde9e48578ed2e9e4727f2f274ce1e935ca7737f72c48ab784cd6746"))
-
-        let a = BigNum(hex: "64b3ad7303c5515bf905d65ceb59f9a96911da589a2031e2216c0fb4bbbee692dfb9a312094aa84eff77402cfa2b43eb634b8fae47cb7c1710c9870e47e95549750010c1394965935be4a693bd739bf40fb88e1fe30393e8cd19b3f95a9d039acda5710574cc971082f3d2d1c5df30cd968a6bf914e5aa015b151c89dcf868c9")!
-        // copied from client.swift
-        let A = configuration.g.power(a, modulus: configuration.N)
-
-        XCTAssertEqual(A.hex, "03f102ceee902863044d64f51b2d04b1f74a60a508587fcbb68fd793caa625ad72cf5f136d47d143e7c8236008548ccb33ca2b9fab8b7a8936c78bc34bffa5eecdbe994f7f77178aef34a5dc22b33924731f3af9cc247a87747d99e3c67cfad34387cdfdfba3289229abd5a80e4efa48258b0da5b2e20f5f2c5940319b549dcd")
-
-        let b = BigNum(hex: "8dea3473140b79af5253b71eeacc76a1f697dc403706010888f5f9ecfb585bd9a01ea952cc8a5f3eb3419191763845f2ceb8480b088fec98beadff10f8f77368e5d10921e6582b7c6da21b4668f11880b8d81b65c0130ee2bfe606b9285c463cdac608466e12832e1d294a85622feb77f46386b97c71e071519c9581e82e6a19")!
-        // copied from server.swift
-        let B = (configuration.k * verifier + configuration.g.power(b, modulus: configuration.N)) % configuration.N
-
-        XCTAssertEqual(B.hex, "ea51458f43e20640f6467b8a2fd91df244015f87cd9b01c7f7a2dea3987dc8d230bc6fdaf320e9abc21f6f56be6778f74ddae190801ee157010906154b9452be2a35f34820f1810b2d9160ce5511719c6632957abdd018847dbb415ac51c4b84b10b64de6a18f1269d074ca36223f993ab71dbbb687d6447136ca24c042a359b")
-
-        let sharedSecret = try client.getSharedSecret(username: username, password: password, clientPublicKey: SRPKey(A), clientPrivateKey: SRPKey(a), serverPublicKey: B, salt: salt)
-        let hash = [UInt8](Insecure.SHA1.hash(data: sharedSecret.bytes))
-
-        XCTAssertEqual(hash.hexdigest(), "4d1513ebcdf8dd82a2ce1d1aec787e8e4f5be886")
-    }
-
     func testClientSessionProof() {
         let configuration = SRPConfiguration<Insecure.SHA1>(.N1024)
         let username = "alice"
@@ -170,6 +139,10 @@ final class srpTests: XCTestCase {
     static var allTests = [
         ("testSRPSharedSecret", testSRPSharedSecret),
         ("testVerifySRP", testVerifySRP),
+        ("testVerifySRPCustomConfiguration", testVerifySRPCustomConfiguration),
+        ("testClientSessionProof", testClientSessionProof),
+        ("testServerSessionProof", testServerSessionProof),
+        ("testRFC5054Appendix", testRFC5054Appendix)        
     ]
 }
 

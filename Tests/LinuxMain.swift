@@ -1,7 +1,6 @@
 import XCTest
-
-import srpTests
+import SRPTests
 
 var tests = [XCTestCaseEntry]()
-tests += srpTests.allTests()
+tests += SRPTests.allTests()
 XCTMain(tests)
