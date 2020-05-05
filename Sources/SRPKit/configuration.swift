@@ -13,7 +13,7 @@ public struct SRPConfiguration<H: HashFunction> {
     
     /// Initialise SRPConfiguration with known safe prime
     /// - Parameter prime: enum indicating size of prime
-    init(_ prime: Prime) {
+    public init(_ prime: Prime) {
         self.N = prime.group
         self.sizeN = Int(self.N.numBits() + 7) / 8
         self.g = prime.generator
@@ -24,14 +24,14 @@ public struct SRPConfiguration<H: HashFunction> {
     /// - Parameters:
     ///   - N: Large prime
     ///   - g: multiplicative group generator (usually 2)
-    init(N: BigNum, g: BigNum) {
+    public init(N: BigNum, g: BigNum) {
         self.N = N
         self.sizeN = Int(self.N.numBits() + 7) / 8
         self.g = g
         self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + SRP<H>.pad(self.g.bytes, to: sizeN))))
     }
     
-    enum Prime {
+    public enum Prime {
         case N1024
         case N1536
         case N2048

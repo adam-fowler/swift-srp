@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto", from: "1.0.0"),
-        .package(url: "https://github.com/adam-fowler/big-num", .branch("master")),
+        .package(url: "https://github.com/adam-fowler/big-num", .branch("boringssl")),
     ],
     targets: [
         .target(name: "SRPKit", dependencies: ["BigNum", "Crypto"]),
