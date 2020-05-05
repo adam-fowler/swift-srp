@@ -12,14 +12,25 @@ final class srpTests: XCTestCase {
         let client = SRPClient<Insecure.SHA1>(configuration: configuration)
         let server = SRPServer<Insecure.SHA1>(configuration: configuration)
         
-        let values = client.generateSaltAndVerifier(username: username, password: password)
+        let (salt, verifier) = client.generateSaltAndVerifier(username: username, password: password)
         
         let clientState = client.initiateAuthentication()
         
         do {
-            let serverValues = server.generateKeys(v: values.verifier.number!)
-            let sharedSecret = try client.getSharedSecret(username: username, password: password, clientPublicKey: clientState.publicKey, clientPrivateKey: clientState.privateKey, serverPublicKey: serverValues.publicKey, salt: values.salt)
-            let serverSharedSecret = try server.getSharedSecret(clientPublicKey: clientState.publicKey, serverPublicKey: serverValues.publicKey, serverPrivateKey: serverValues.privateKey, verifier: values.verifier.number!)
+            let serverValues = server.generateKeys(v: verifier.number!)
+            let sharedSecret = try client.getSharedSecret(
+                username: username,
+                password: password,
+                clientPublicKey: clientState.publicKey,
+                clientPrivateKey: clientState.privateKey,
+                serverPublicKey: serverValues.publicKey,
+                salt: salt)
+            
+            let serverSharedSecret = try server.getSharedSecret(
+                clientPublicKey: clientState.publicKey,
+                serverPublicKey: SRPKey(serverValues.publicKey),
+                serverPrivateKey: SRPKey(serverValues.privateKey),
+                verifier: verifier.number!)
 
             XCTAssertEqual(sharedSecret, serverSharedSecret)
         } catch {
@@ -34,20 +45,20 @@ final class srpTests: XCTestCase {
         let client = SRPClient<SHA256>(configuration: configuration)
         let server = SRPServer<SHA256>(configuration: configuration)
         
-        let values = client.generateSaltAndVerifier(username: username, password: password)
+        let (salt, verifier) = client.generateSaltAndVerifier(username: username, password: password)
         
         do {
             // client initiates authentication
             var clientState = client.initiateAuthentication()
             // provides the server with an A value and username from which it gets the password verifier.
             // server initiates authentication
-            let serverState = try server.initiateAuthentication(clientPublicKey: clientState.publicKey, verifier: values.verifier)
+            let serverState = try server.initiateAuthentication(clientPublicKey: clientState.publicKey, verifier: verifier)
             // server passes back B value and a salt which was attached to the user
             // client calculates verification code from username, password, current authenticator state, B and salt
-            let clientCode = try client.calculateClientVerificationCode(username: username, password: password, state: &clientState, serverPublicKey: serverState.serverPublicKey, salt: values.salt)
+            let clientCode = try client.calculateClientVerificationCode(username: username, password: password, state: &clientState, serverPublicKey: serverState.serverPublicKey, salt: salt)
             // client passes verification key to server
             // server validates the key and then returns a server validation key
-            let serverCode = try server.verifyClientCode(clientCode, username: username, salt: values.salt, state: serverState)
+            let serverCode = try server.verifyClientCode(clientCode, username: username, salt: salt, verifier: verifier, state: serverState)
             // client verifies server validation key
             try client.verifyServerCode(serverCode, state: clientState)
         } catch {
@@ -115,7 +126,7 @@ final class srpTests: XCTestCase {
         let salt = "BEB25379D1A8581EB5A727673A2441EE".bytes(using: .hexadecimal)!
         let configuration = SRPConfiguration<Insecure.SHA1>(.N1024)
         let client = SRPClient<Insecure.SHA1>(configuration: configuration)
-        
+
         XCTAssertEqual(configuration.k.hex, "7556AA045AEF2CDD07ABAF0F665C3E818913186F")
         
         let verifier = client.generatePasswordVerifier(username: username, password: password, salt: salt)
@@ -139,7 +150,6 @@ final class srpTests: XCTestCase {
         XCTAssertEqual(u.hex, "CE38B9593487DA98554ED47D70A7AE5F462EF019")
         
         let sharedSecret = try client.getSharedSecret(username: username, password: password, clientPublicKey: SRPKey(A), clientPrivateKey: SRPKey(a), serverPublicKey: B, salt: salt)
-        
         XCTAssertEqual(sharedSecret.hex, "B0DC82BABCF30674AE450C0287745E7990A3381F63B387AAF271A10D233861E359B48220F7C4693C9AE12B0A6F67809F0876E2D013800D6C41BB59B6D5979B5C00A172B4A2A5903A0BDCAF8A709585EB2AFAFA8F3499B200210DCC1F10EB33943CD67FC88A2F39A4BE5BEC4EC0A3212DC346D7E474B29EDE8A469FFECA686E5A")
     }
     

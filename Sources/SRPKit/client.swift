@@ -24,8 +24,8 @@ public struct SRPClient<H: HashFunction> {
         case invalidServerCode
         /// you called verifyServerCode without a verification key
         case requiresVerificationKey
-        /// you called verifyServerCode without a verification key
-        case internalError
+        /// client key is invalid
+        case invalidClientKey
     }
     
     /// Authentication state, keeps a record of the variables needed throughout the process
@@ -110,7 +110,7 @@ public struct SRPClient<H: HashFunction> {
 extension SRPClient {
     /// return shared secret given the username, password, B value and salt from the server
     func getSharedSecret(username: String, password: String, clientPublicKey: SRPKey, clientPrivateKey: SRPKey, serverPublicKey: BigNum, salt: [UInt8]) throws -> BigNum {
-        guard let clientPrivateKeyNumber = clientPrivateKey.number else { throw Error.internalError }
+        guard let clientPrivateKeyNumber = clientPrivateKey.number else { throw Error.invalidClientKey }
         guard serverPublicKey % configuration.N != BigNum(0) else { throw Error.nullServerKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
@@ -119,7 +119,7 @@ extension SRPClient {
         guard u != 0 else { throw Error.nullServerKey }
         
         // calculate x = H(salt | H(poolName | userId | ":" | password))
-        let message = Data("\(username):\(password)".utf8)
+        let message = [UInt8]("\(username):\(password)".utf8)
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         
         // calculate S = (B - k*g^x)^(a+u*x)
