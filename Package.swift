@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SRP",
+    name: "swift-srp",
     platforms: [
         .macOS(.v10_15),
         .iOS(.v13),
@@ -12,15 +12,15 @@ let package = Package(
         .tvOS(.v13),
     ],
     products: [
-        .library(name: "SRPKit", targets: ["SRPKit"]),
+        .library(name: "SRP", targets: ["SRP"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto", from: "1.0.0"),
         .package(url: "https://github.com/adam-fowler/big-num", .branch("boringssl")),
     ],
     targets: [
-        .target(name: "SRPKit", dependencies: ["BigNum", "Crypto"]),
+        .target(name: "SRP", dependencies: ["BigNum", "Crypto"]),
         .testTarget(
-            name: "SRPTests", dependencies: ["SRPKit"]),
+            name: "SRPTests", dependencies: ["SRP"]),
     ]
 )

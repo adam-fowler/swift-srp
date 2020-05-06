@@ -1,7 +1,7 @@
 import XCTest
 import BigNum
 import Crypto
-@testable import SRPKit
+@testable import SRP
 
 final class SRPTests: XCTestCase {
 
