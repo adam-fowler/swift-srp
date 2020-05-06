@@ -40,14 +40,14 @@ public struct SRPServer<H: HashFunction> {
     }
     
     /// generate public and private keys to be used in srp authentication
-    /// - Parameter v: password verifier used to generate key pair
+    /// - Parameter verifier: password verifier used to generate key pair
     /// - Returns: return public/private key pair
-    public func generateKeys(v: SRPKey) -> SRPKeyPair {
+    public func generateKeys(verifier: SRPKey) -> SRPKeyPair {
         var b: BigNum
         var B: BigNum
         repeat {
             b = BigNum(bytes: SymmetricKey(size: .bits256))
-            B = (configuration.k * v.number + configuration.g.power(b, modulus: configuration.N)) % configuration.N
+            B = (configuration.k * verifier.number + configuration.g.power(b, modulus: configuration.N)) % configuration.N
         } while B % configuration.N == BigNum(0)
         
         return SRPKeyPair(public: SRPKey(B), private: SRPKey(b))

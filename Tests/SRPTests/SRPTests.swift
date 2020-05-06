@@ -15,7 +15,7 @@ final class SRPTests: XCTestCase {
         let (salt, verifier) = client.generateSaltAndVerifier(username: username, password: password)
 
         let clientKeys = client.generateKeys()
-        let serverKeys = server.generateKeys(v: verifier)
+        let serverKeys = server.generateKeys(verifier: verifier)
 
         do {
             let sharedSecret = try client.calculateSharedSecret(
@@ -49,7 +49,7 @@ final class SRPTests: XCTestCase {
             let clientKeys = client.generateKeys()
             // provides the server with an A value and username from which it gets the password verifier.
             // server initiates authentication
-            let serverKeys = server.generateKeys(v: verifier)
+            let serverKeys = server.generateKeys(verifier: verifier)
             // server passes back B value and a salt which was attached to the user
             // client calculates verification code from username, password, current authenticator state, B and salt
             let clientSharedSecret = try client.calculateSharedSecret(username: username, password: password, salt: salt, clientKeys: clientKeys, serverPublicKey: serverKeys.public)
