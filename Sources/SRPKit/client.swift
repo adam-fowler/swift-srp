@@ -110,6 +110,12 @@ public struct SRPClient<H: HashFunction> {
 extension SRPClient {
     /// return shared secret given the username, password, B value and salt from the server
     func getSharedSecret(username: String, password: String, clientPublicKey: SRPKey, clientPrivateKey: SRPKey, serverPublicKey: BigNum, salt: [UInt8]) throws -> BigNum {
+        let message = [UInt8]("\(username):\(password)".utf8)
+        return try getSharedSecret(message: message, clientPublicKey: clientPublicKey, clientPrivateKey: clientPrivateKey, serverPublicKey: serverPublicKey, salt: salt)
+    }
+    
+    /// return shared secret given the username, password, B value and salt from the server
+    func getSharedSecret(message: [UInt8], clientPublicKey: SRPKey, clientPrivateKey: SRPKey, serverPublicKey: BigNum, salt: [UInt8]) throws -> BigNum {
         guard let clientPrivateKeyNumber = clientPrivateKey.number else { throw Error.invalidClientKey }
         guard serverPublicKey % configuration.N != BigNum(0) else { throw Error.nullServerKey }
 
@@ -118,8 +124,6 @@ extension SRPClient {
 
         guard u != 0 else { throw Error.nullServerKey }
         
-        // calculate x = H(salt | H(poolName | userId | ":" | password))
-        let message = [UInt8]("\(username):\(password)".utf8)
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         
         // calculate S = (B - k*g^x)^(a+u*x)
@@ -130,7 +134,12 @@ extension SRPClient {
     
     /// generate password verifier
     public func generatePasswordVerifier(username: String, password: String, salt: [UInt8]) -> BigNum {
-        let message = [UInt8]("\(username):\(password)".utf8)
+        let message = "\(username):\(password)"
+        return generatePasswordVerifier(message: [UInt8](message.utf8), salt: salt)
+    }
+    
+    /// generate password verifier
+    public func generatePasswordVerifier(message: [UInt8], salt: [UInt8]) -> BigNum {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         let verifier = configuration.g.power(x, modulus: configuration.N)
         return verifier
