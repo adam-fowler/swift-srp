@@ -1,20 +1,5 @@
 import BigNum
 import Crypto
-import Foundation
-
-/// Wrapper for keys used by SRP
-public struct SRPKey {
-    public let bytes: [UInt8]
-    public var number: BigNum? { return BigNum(bytes: bytes) }
-    
-    public init(_ bytes: [UInt8]) {
-        self.bytes = bytes
-    }
-    
-    public init(_ number: BigNum) {
-        self.bytes = number.bytes
-    }
-}
 
 /// Contains common code used by both client and server SRP code
 struct SRP<H: HashFunction> {
@@ -34,7 +19,7 @@ struct SRP<H: HashFunction> {
     }
     
     /// Calculate client verification code
-    static func calculateClientVerification(
+    static func calculateClientProof(
         configuration: SRPConfiguration<H>,
         username: String,
         salt: [UInt8],
@@ -51,8 +36,8 @@ struct SRP<H: HashFunction> {
     }
 
     /// Calculate server verification code
-    static func calculateServerVerification(clientPublicKey: SRPKey, clientVerifyCode: [UInt8], sharedSecret: [UInt8]) -> [UInt8] {
-        let HAMK = H.hash(data: clientPublicKey.bytes + clientVerifyCode + sharedSecret)
+    static func calculateServerVerification(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: [UInt8]) -> [UInt8] {
+        let HAMK = H.hash(data: clientPublicKey.bytes + clientProof + sharedSecret)
         return [UInt8](HAMK)
     }
 }

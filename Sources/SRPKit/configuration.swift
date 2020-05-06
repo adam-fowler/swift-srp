@@ -1,14 +1,15 @@
 import BigNum
 import Crypto
-import Foundation
 
-/// SRP Configuration. The same configuration hast to be used by both client and server.
-/// Contains a large safe prime N ie a prime where the value (N-1)/2 is also a prime
-/// g the multiplicative group generator and the value k = Hash(N | g)
+/// SRP Configuration. The same configuration hast to be used by both client and server. Contains a large safe prime N ie a prime where the value (N-1)/2 is also a prime, g the multiplicative group generator and the value k = Hash(N | g)
 public struct SRPConfiguration<H: HashFunction> {
+    /// large safe prime
     public let N: BigNum
+    /// multiplicative group generator
     public let g: BigNum
+    /// derived value from N and g. k = H( N | g )
     public let k: BigNum
+    /// size in bytes of N
     public let sizeN: Int
     
     /// Initialise SRPConfiguration with known safe prime

@@ -14,23 +14,21 @@ final class SRPTests: XCTestCase {
 
         let (salt, verifier) = client.generateSaltAndVerifier(username: username, password: password)
 
-        let clientState = client.initiateAuthentication()
+        let clientKeys = client.generateKeys()
+        let serverKeys = server.generateKeys(v: verifier)
 
         do {
-            let serverValues = server.generateKeys(v: verifier.number!)
-            let sharedSecret = try client.getSharedSecret(
+            let sharedSecret = try client.calculateSharedSecret(
                 username: username,
                 password: password,
-                clientPublicKey: clientState.publicKey,
-                clientPrivateKey: clientState.privateKey,
-                serverPublicKey: serverValues.publicKey,
-                salt: salt)
+                salt: salt,
+                clientKeys: clientKeys,
+                serverPublicKey: serverKeys.public)
 
-            let serverSharedSecret = try server.getSharedSecret(
-                clientPublicKey: clientState.publicKey,
-                serverPublicKey: SRPKey(serverValues.publicKey),
-                serverPrivateKey: SRPKey(serverValues.privateKey),
-                verifier: verifier.number!)
+            let serverSharedSecret = try server.calculateSharedSecret(
+                clientPublicKey: clientKeys.public,
+                serverKeys: serverKeys,
+                verifier: verifier)
 
             XCTAssertEqual(sharedSecret, serverSharedSecret)
         } catch {
@@ -48,18 +46,20 @@ final class SRPTests: XCTestCase {
 
         do {
             // client initiates authentication
-            var clientState = client.initiateAuthentication()
+            let clientKeys = client.generateKeys()
             // provides the server with an A value and username from which it gets the password verifier.
             // server initiates authentication
-            let serverState = try server.initiateAuthentication(clientPublicKey: clientState.publicKey, verifier: verifier)
+            let serverKeys = server.generateKeys(v: verifier)
             // server passes back B value and a salt which was attached to the user
             // client calculates verification code from username, password, current authenticator state, B and salt
-            let clientCode = try client.calculateClientVerificationCode(username: username, password: password, state: &clientState, serverPublicKey: serverState.serverPublicKey, salt: salt)
-            // client passes verification key to server
+            let clientSharedSecret = try client.calculateSharedSecret(username: username, password: password, salt: salt, clientKeys: clientKeys, serverPublicKey: serverKeys.public)
+            let clientProof = client.calculateClientProof(username: username, salt: salt, clientPublicKey: clientKeys.public, serverPublicKey: serverKeys.public, sharedSecret: clientSharedSecret)
+            // client passes proof key to server
             // server validates the key and then returns a server validation key
-            let serverCode = try server.verifyClientCode(clientCode, username: username, salt: salt, verifier: verifier, state: serverState)
+            let serverSharedSecret = try server.calculateSharedSecret(clientPublicKey: clientKeys.public, serverKeys: serverKeys, verifier: verifier)
+            let serverProof = try server.verifyClientProof(proof: clientProof, username: username, salt: salt, clientPublicKey: clientKeys.public, serverPublicKey: serverKeys.public, sharedSecret: serverSharedSecret)
             // client verifies server validation key
-            try client.verifyServerCode(serverCode, state: clientState)
+            try client.verifyServerProof(serverProof: serverProof, clientProof: clientProof, clientKeys: clientKeys, sharedSecret: clientSharedSecret)
         } catch {
             XCTFail("\(error)")
         }
@@ -86,7 +86,7 @@ final class SRPTests: XCTestCase {
         let A = BigNum(hex: "b525e8fe2eac8f5da6b3220e66a0ab6f833a59d5f079fe9ddcdf111a22eaec95850374d9d7597f45497eb429bcde5057a450948de7d48edc034264916a01e6c0690e14b0a527f107d3207fd2214653c9162f5745e7cbeb19a550a072d4600ce8f4ef778f6d6899ba718adf0a462e7d981ed689de93ea1bda773333f23ebb4a9b")!
         let B = BigNum(hex: "2bfc8559a022497f1254af3c76786b95cb0dfb449af15501aa51eefe78947d7ef06df4fcc07a899bcaae0e552ca72c7a1f3016f3ec357a86a1428dad9f98cb8a69d405404e57e9aaf01e51a46a73b3fc7bc1d212569e4a882ae6d878599e098c89033838ec069fe368a49461f531e5b4662700d56d8c252d0aea9da6abe9b014")!
         let secret = "b6288955afd690a13686d65886b5f82018515df3".bytes(using: .hexadecimal)!
-        let clientProof = SRP<Insecure.SHA1>.calculateClientVerification(configuration: configuration, username: username, salt: salt, clientPublicKey: SRPKey(A), serverPublicKey: SRPKey(B), hashSharedSecret: secret)
+        let clientProof = SRP<Insecure.SHA1>.calculateClientProof(configuration: configuration, username: username, salt: salt, clientPublicKey: SRPKey(A), serverPublicKey: SRPKey(B), hashSharedSecret: secret)
 
         XCTAssertEqual(clientProof.hexdigest(), "e4c5c2e145ea2de18d0cc1ac9dc2a0d0988706d6")
     }
@@ -96,7 +96,7 @@ final class SRPTests: XCTestCase {
         let secret = "d89740e18a9fb597aef8f2ecc0e66f4b31c2ae08".bytes(using: .hexadecimal)!
         let clientProof = "e1a8629a723039a61be91a173ab6260fc582192f".bytes(using: .hexadecimal)!
 
-        let serverProof = SRP<Insecure.SHA1>.calculateServerVerification(clientPublicKey: SRPKey(A), clientVerifyCode: clientProof, sharedSecret: secret)
+        let serverProof = SRP<Insecure.SHA1>.calculateServerVerification(clientPublicKey: SRPKey(A), clientProof: clientProof, sharedSecret: secret)
 
         XCTAssertEqual(serverProof.hexdigest(), "8342bd06bdf4d263de2df9a56da8e581fb38c769")
     }
@@ -131,9 +131,9 @@ final class SRPTests: XCTestCase {
 
         XCTAssertEqual(u.hex, "CE38B9593487DA98554ED47D70A7AE5F462EF019".lowercased())
 
-        let sharedSecret = try client.getSharedSecret(username: username, password: password, clientPublicKey: SRPKey(A), clientPrivateKey: SRPKey(a), serverPublicKey: B, salt: salt)
+        let sharedSecret = try client.calculateSharedSecret(username: username, password: password, salt: salt, clientKeys: SRPKeyPair(public: SRPKey(A), private: SRPKey(a)), serverPublicKey: SRPKey(B))
 
-        XCTAssertEqual(sharedSecret.hex, "B0DC82BABCF30674AE450C0287745E7990A3381F63B387AAF271A10D233861E359B48220F7C4693C9AE12B0A6F67809F0876E2D013800D6C41BB59B6D5979B5C00A172B4A2A5903A0BDCAF8A709585EB2AFAFA8F3499B200210DCC1F10EB33943CD67FC88A2F39A4BE5BEC4EC0A3212DC346D7E474B29EDE8A469FFECA686E5A".lowercased())
+        XCTAssertEqual(sharedSecret.number.hex, "B0DC82BABCF30674AE450C0287745E7990A3381F63B387AAF271A10D233861E359B48220F7C4693C9AE12B0A6F67809F0876E2D013800D6C41BB59B6D5979B5C00A172B4A2A5903A0BDCAF8A709585EB2AFAFA8F3499B200210DCC1F10EB33943CD67FC88A2F39A4BE5BEC4EC0A3212DC346D7E474B29EDE8A469FFECA686E5A".lowercased())
     }
 
     /// Test library against Mozilla test vectors https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#SRP_Verifier
@@ -167,9 +167,9 @@ final class SRPTests: XCTestCase {
 
         XCTAssertEqual(u.hex, "b284aa1064e8775150da6b5e2147b47ca7df505bed94a6f4bb2ad873332ad732")
 
-        /*let sharedSecret = try client.getSharedSecret(message: message, clientPublicKey: SRPKey(A), clientPrivateKey: SRPKey(a), serverPublicKey: B, salt: salt)
+        let sharedSecret = try client.calculateSharedSecret(message: message, salt: salt, clientKeys: SRPKeyPair(public: SRPKey(A), private: SRPKey(a)), serverPublicKey: SRPKey(B))
 
-        XCTAssertEqual(sharedSecret.hex, "0092aaf0f527906aa5e8601f5d707907a03137e1b601e04b5a1deb02a981f4be037b39829a27dba50f1b27545ff2e28729c2b79dcbdd32c9d6b20d340affab91a626a8075806c26fe39df91d0ad979f9b2ee8aad1bc783e7097407b63bfe58d9118b9b0b2a7c5c4cdebaf8e9a460f4bf6247b0da34b760a59fac891757ddedcaf08eed823b090586c63009b2d740cc9f5397be89a2c32cdcfe6d6251ce11e44e6ecbdd9b6d93f30e90896d2527564c7eb9ff70aa91acc0bac1740a11cd184ffb989554ab58117c2196b353d70c356160100ef5f4c28d19f6e59ea2508e8e8aac6001497c27f362edbafb25e0f045bfdf9fb02db9c908f10340a639fe84c31b27")*/
+        XCTAssertEqual(sharedSecret.hex, "92aaf0f527906aa5e8601f5d707907a03137e1b601e04b5a1deb02a981f4be037b39829a27dba50f1b27545ff2e28729c2b79dcbdd32c9d6b20d340affab91a626a8075806c26fe39df91d0ad979f9b2ee8aad1bc783e7097407b63bfe58d9118b9b0b2a7c5c4cdebaf8e9a460f4bf6247b0da34b760a59fac891757ddedcaf08eed823b090586c63009b2d740cc9f5397be89a2c32cdcfe6d6251ce11e44e6ecbdd9b6d93f30e90896d2527564c7eb9ff70aa91acc0bac1740a11cd184ffb989554ab58117c2196b353d70c356160100ef5f4c28d19f6e59ea2508e8e8aac6001497c27f362edbafb25e0f045bfdf9fb02db9c908f10340a639fe84c31b27")
     }
     
     static var allTests = [
@@ -178,7 +178,8 @@ final class SRPTests: XCTestCase {
         ("testVerifySRPCustomConfiguration", testVerifySRPCustomConfiguration),
         ("testClientSessionProof", testClientSessionProof),
         ("testServerSessionProof", testServerSessionProof),
-        ("testRFC5054Appendix", testRFC5054Appendix)        
+        ("testRFC5054Appendix", testRFC5054Appendix),
+        ("testMozillaTestVectors", testMozillaTestVectors),
     ]
 }
 
