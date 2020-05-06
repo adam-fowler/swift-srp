@@ -1,6 +1,6 @@
 # Swift SRP
 
-This library provides an implementation of the Secure Remote Password protocol. Secure Remote Password (SRP) provides username and password authentication without needing to provide your password to the server. As the server never sees your password it can never leak it to anyone else.
+This library provides a swift implementation of the Secure Remote Password protocol. Secure Remote Password (SRP) provides username and password authentication without needing to provide your password to the server. As the server never sees your password it can never leak it to anyone else.
 
 The server is provided with a cryptographic verifier that is derived from the password and a salt value that was used in the generation of this verifier. Both client and server generate large private and public keys and with these are able to generate a shared secret. The client then sends a proof they have the secret and if it is verified the server will do the same to verify the server as well.
 
