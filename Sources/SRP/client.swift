@@ -58,7 +58,7 @@ public struct SRPClient<H: HashFunction> {
     ///   - serverPublicKey: server public key
     /// - Throws: `nullServerKey`
     /// - Returns: shared secret
-    func calculateSharedSecret(username: String, password: String, salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
+    public func calculateSharedSecret(username: String, password: String, salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
         let message = [UInt8]("\(username):\(password)".utf8)
         let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
         return SRPKey(sharedSecret)

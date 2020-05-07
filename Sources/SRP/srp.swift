@@ -2,7 +2,7 @@ import BigNum
 import Crypto
 
 /// Contains common code used by both client and server SRP code
-struct SRP<H: HashFunction> {
+public struct SRP<H: HashFunction> {
 
     /// pad to a certain size by prefixing with zeros
     static func pad(_ data: [UInt8], to size: Int) -> [UInt8] {
@@ -14,7 +14,7 @@ struct SRP<H: HashFunction> {
     }
     
     /// calculate u = H(clientPublicKey | serverPublicKey)
-    static func calculateU(clientPublicKey: [UInt8], serverPublicKey: [UInt8], pad: Int) -> BigNum {
+    public static func calculateU(clientPublicKey: [UInt8], serverPublicKey: [UInt8], pad: Int) -> BigNum {
         BigNum(bytes: [UInt8].init(H.hash(data: SRP<H>.pad(clientPublicKey, to: pad) + SRP<H>.pad(serverPublicKey, to: pad))))
     }
     
