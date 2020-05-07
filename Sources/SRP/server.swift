@@ -16,7 +16,7 @@ import Crypto
 ///
 public struct SRPServer<H: HashFunction> {
     ///Errors thrown by SRPServer
-    enum Error: Swift.Error {
+    public enum Error: Swift.Error {
         /// the modulus of the client key and N generated a zero
         case nullClientKey
         /// client proof of the shared secret was invalid or wrong

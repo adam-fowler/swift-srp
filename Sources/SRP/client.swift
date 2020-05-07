@@ -16,7 +16,7 @@ import Crypto
 ///
 public struct SRPClient<H: HashFunction> {
     /// Errors thrown by SRPClient
-    enum Error: Swift.Error {
+    public enum Error: Swift.Error {
         /// the key returned by server is invalid, in that either it modulo N is zero or the hash(A,B) is zero
         case nullServerKey
         /// server verification code was wrong
@@ -28,7 +28,7 @@ public struct SRPClient<H: HashFunction> {
     }
     
     /// configuration. This needs to be the same as the server configuration
-    let configuration: SRPConfiguration<H>
+    public let configuration: SRPConfiguration<H>
     
     /// Initialise a SRPClient object
     /// - Parameter configuration: configuration to use
