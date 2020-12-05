@@ -37,7 +37,7 @@ The server replies with the `serverPublicKey` and the salt value associated with
 
 The client then creates the shared secret using the username, password, salt, its own key pair and the server public key. It then has to generate a proof it has the shared secret. This proof is generated from shared secret plus any of the public data available.
 ```swift
-let sharedSecret = try client.calculateSharedSecret(
+let clientSharedSecret = try client.calculateSharedSecret(
     username: username, 
     password: password, 
     salt: salt, 
