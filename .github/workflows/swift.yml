@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ['swift:5.1', 'swift:5.2', 'swiftlang/swift:nightly-focal']
+        image: ['swift:5.1', 'swift:5.2', 'swift:5.3']
     container:
       image: ${{ matrix.image }}
     steps:
