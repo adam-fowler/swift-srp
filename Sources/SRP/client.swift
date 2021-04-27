@@ -1,5 +1,4 @@
 import BigNum
-import Crypto
 
 /// Manages the client side of Secure Remote Password
 ///
@@ -42,7 +41,7 @@ public struct SRPClient<H: HashFunction> {
         var a = BigNum()
         var A = BigNum()
         repeat {
-            a = BigNum(bytes: SymmetricKey(size: .bits256))
+            a = BigNum(bytes: SymmetricKey(size: 32))
             A = configuration.g.power(a, modulus: configuration.N)
         } while A % configuration.N == BigNum(0)
 
