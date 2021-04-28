@@ -1,6 +1,5 @@
 import XCTest
 import BigNum
-import Crypto
 @testable import SRP
 
 final class SRPTests: XCTestCase {
@@ -73,10 +72,6 @@ final class SRPTests: XCTestCase {
         testVerifySRP(configuration: SRPConfiguration<Insecure.SHA1>(.N4096))
         testVerifySRP(configuration: SRPConfiguration<Insecure.SHA1>(.N6144))
         testVerifySRP(configuration: SRPConfiguration<Insecure.SHA1>(.N8192))
-    }
-
-    func testVerifySRPCustomConfiguration() {
-        testVerifySRP(configuration: SRPConfiguration<SHA384>(N: BigNum(37), g: BigNum(3)))
     }
 
     func testClientSessionProof() {
@@ -175,7 +170,6 @@ final class SRPTests: XCTestCase {
     static var allTests = [
         ("testSRPSharedSecret", testSRPSharedSecret),
         ("testVerifySRP", testVerifySRP),
-        ("testVerifySRPCustomConfiguration", testVerifySRPCustomConfiguration),
         ("testClientSessionProof", testClientSessionProof),
         ("testServerSessionProof", testServerSessionProof),
         ("testRFC5054Appendix", testRFC5054Appendix),

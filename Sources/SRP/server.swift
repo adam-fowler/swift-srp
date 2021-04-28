@@ -1,5 +1,4 @@
 import BigNum
-import Crypto
 
 /// Manages the server side of Secure Remote Password.
 ///
@@ -46,7 +45,7 @@ public struct SRPServer<H: HashFunction> {
         var b: BigNum
         var B: BigNum
         repeat {
-            b = BigNum(bytes: SymmetricKey(size: .bits256))
+            b = BigNum(bytes: SymmetricKey(size: 32))
             B = (configuration.k * verifier.number + configuration.g.power(b, modulus: configuration.N)) % configuration.N
         } while B % configuration.N == BigNum(0)
         

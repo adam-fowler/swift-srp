@@ -1,5 +1,4 @@
 import BigNum
-import Crypto
 
 /// Contains common code used by both client and server SRP code
 public struct SRP<H: HashFunction> {
