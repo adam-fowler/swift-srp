@@ -18,7 +18,27 @@ public struct SRP<H: HashFunction> {
         BigNum(bytes: [UInt8].init(H.hash(data: SRP<H>.pad(clientPublicKey, to: pad) + SRP<H>.pad(serverPublicKey, to: pad))))
     }
     
-    /// Calculate client verification code
+    /// Calculate a simpler client verification code H(A | B | S)
+    static func calculateSimpleClientProof(
+        clientPublicKey: SRPKey,
+        serverPublicKey: SRPKey,
+        sharedSecret: SRPKey) -> [UInt8]
+    {
+        let HABK = H.hash(data: clientPublicKey.bytes + serverPublicKey.bytes + sharedSecret.bytes)
+        return [UInt8](HABK)
+    }
+    
+    /// Calculate a simpler client verification code H(A | M1 | S)
+    static func calculateSimpleServerVerification(
+        clientPublicKey: SRPKey,
+        clientProof: [UInt8],
+        sharedSecret: SRPKey) -> [UInt8]
+    {
+        let HABK = H.hash(data: clientPublicKey.bytes + clientProof + sharedSecret.bytes)
+        return [UInt8](HABK)
+    }
+
+    /// Calculate client verification code H(H(N)^ H(g)) | H(username) | salt | A | B | H(S))
     static func calculateClientProof(
         configuration: SRPConfiguration<H>,
         username: String,
@@ -27,8 +47,7 @@ public struct SRP<H: HashFunction> {
         serverPublicKey: SRPKey,
         hashSharedSecret: [UInt8]) -> [UInt8]
     {
-        // calculate shared secret proof M
-        // M = H(H(N)^ H(g)) | H(username) | salt | client key | server key | shared secret)
+        // M = H(H(N)^ H(g)) | H(username) | salt | client key | server key | H(shared secret))
         let N_xor_g = [UInt8](H.hash(data: configuration.N.bytes)) ^ [UInt8](H.hash(data: configuration.g.bytes))
         let hashUser = H.hash(data: [UInt8](username.utf8))
         let M1 = [UInt8](N_xor_g) + hashUser + salt
@@ -37,7 +56,7 @@ public struct SRP<H: HashFunction> {
         return [UInt8](M)
     }
 
-    /// Calculate server verification code
+    /// Calculate server verification code H(A | M1 | K)
     static func calculateServerVerification(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: [UInt8]) -> [UInt8] {
         let HAMK = H.hash(data: clientPublicKey.bytes + clientProof + sharedSecret)
         return [UInt8](HAMK)

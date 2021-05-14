@@ -80,6 +80,25 @@ public struct SRPServer<H: HashFunction> {
     ///   - state: authentication state.
     /// - Throws: invalidClientCode
     /// - Returns: The server verification code
+    public func verifySimpleClientProof(proof: [UInt8], clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) throws -> [UInt8] {
+        let clientProof = SRP<H>.calculateSimpleClientProof(
+            clientPublicKey: clientPublicKey,
+            serverPublicKey: serverPublicKey,
+            sharedSecret: sharedSecret
+        )
+        guard clientProof == proof else { throw Error.invalidClientProof }
+        return SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
+    }
+
+    /// verify proof that client has shared secret and return a server verification proof. If verification fails a `invalidClientCode` error is thrown
+    ///
+    /// - Parameters:
+    ///   - code: verification code sent by user
+    ///   - username: username
+    ///   - salt: salt stored with user
+    ///   - state: authentication state.
+    /// - Throws: invalidClientCode
+    /// - Returns: The server verification code
     public func verifyClientProof(proof: [UInt8], username: String, salt: [UInt8], clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) throws -> [UInt8] {
         let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
         

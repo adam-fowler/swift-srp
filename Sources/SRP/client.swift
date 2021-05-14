@@ -64,6 +64,30 @@ public struct SRPClient<H: HashFunction> {
         return SRPKey(sharedSecret)
     }
     
+    
+    /// calculate proof of shared secret to send to server
+    /// - Parameters:
+    ///   - clientPublicKey: client public key
+    ///   - serverPublicKey: server public key
+    ///   - sharedSecret: shared secret
+    /// - Returns: The client verification code which should be passed to the server
+    public func calculateSimpleClientProof(clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) -> [UInt8] {
+        // get verification code
+        return SRP<H>.calculateSimpleClientProof(clientPublicKey: clientPublicKey, serverPublicKey: serverPublicKey, sharedSecret: sharedSecret)
+    }
+    
+    /// If the server returns that the client verification code was valiid it will also return a server verification code that the client can use to verify the server is correct
+    ///
+    /// - Parameters:
+    ///   - code: Verification code returned by server
+    ///   - state: Authentication state
+    /// - Throws: `requiresVerificationKey`, `invalidServerCode`
+    public func verifySimpleServerProof(serverProof: [UInt8], clientProof: [UInt8], clientKeys: SRPKeyPair, sharedSecret: SRPKey) throws {
+        // get out version of server proof
+        let HAMS = SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: sharedSecret)
+        // is it the same
+        guard serverProof == HAMS else { throw Error.invalidServerCode }
+    }
 
     /// calculate proof of shared secret to send to server
     /// - Parameters:
