@@ -85,4 +85,6 @@ I believe this library is compliant with RFC5054 and should work with any server
 
 ## Proof of secret
 
-For generating the proof I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version.
+For generating the proof above I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
+
+I have also supplied a simple proof functions `server.verifySimpleClientProof` and `client.verifySimpleServerProof` which use the proof detailed in the Wikipedia [page](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol) on Secure Remote Password if you would prefer to use these.
