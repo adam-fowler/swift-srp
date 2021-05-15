@@ -15,18 +15,6 @@ import Crypto
 /// - https://tools.ietf.org/html/rfc5054
 ///
 public struct SRPClient<H: HashFunction> {
-    /// Errors thrown by SRPClient
-    public enum Error: Swift.Error {
-        /// the key returned by server is invalid, in that either it modulo N is zero or the hash(A,B) is zero
-        case nullServerKey
-        /// server verification code was wrong
-        case invalidServerCode
-        /// you called verifyServerCode without a verification key
-        case requiresVerificationKey
-        /// client key is invalid
-        case invalidClientKey
-    }
-    
     /// configuration. This needs to be the same as the server configuration
     public let configuration: SRPConfiguration<H>
     
@@ -86,7 +74,7 @@ public struct SRPClient<H: HashFunction> {
         // get out version of server proof
         let HAMS = SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: sharedSecret)
         // is it the same
-        guard serverProof == HAMS else { throw Error.invalidServerCode }
+        guard serverProof == HAMS else { throw SRPClientError.invalidServerCode }
     }
 
     /// calculate proof of shared secret to send to server
@@ -116,7 +104,7 @@ public struct SRPClient<H: HashFunction> {
         // get out version of server proof
         let HAMK = SRP<H>.calculateServerVerification(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: hashSharedSecret)
         // is it the same
-        guard serverProof == HAMK else { throw Error.invalidServerCode }
+        guard serverProof == HAMK else { throw SRPClientError.invalidServerCode }
     }
     
     /// Generate salt and password verifier from username and password. When creating your user instead of passing your password to the server, you
@@ -136,12 +124,12 @@ public struct SRPClient<H: HashFunction> {
 extension SRPClient {
     /// return shared secret given the username, password, B value and salt from the server
     func calculateSharedSecret(message: [UInt8], salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> BigNum {
-        guard serverPublicKey.number % configuration.N != BigNum(0) else { throw Error.nullServerKey }
+        guard serverPublicKey.number % configuration.N != BigNum(0) else { throw SRPClientError.nullServerKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
         let u = SRP<H>.calculateU(clientPublicKey: clientKeys.public.bytes, serverPublicKey: serverPublicKey.bytes, pad: configuration.sizeN)
 
-        guard u != 0 else { throw Error.nullServerKey }
+        guard u != 0 else { throw SRPClientError.nullServerKey }
         
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         

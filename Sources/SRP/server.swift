@@ -15,14 +15,6 @@ import Crypto
 /// - https://tools.ietf.org/html/rfc5054
 ///
 public struct SRPServer<H: HashFunction> {
-    ///Errors thrown by SRPServer
-    public enum Error: Swift.Error {
-        /// the modulus of the client key and N generated a zero
-        case nullClientKey
-        /// client proof of the shared secret was invalid or wrong
-        case invalidClientProof
-    }
-    
     /// Authentication state. Stores A,B and shared secret
     public struct AuthenticationState {
         let clientPublicKey: SRPKey
@@ -60,7 +52,7 @@ public struct SRPServer<H: HashFunction> {
     ///   - verifier: password verifier
     /// - Returns: shared secret
     public func calculateSharedSecret(clientPublicKey: SRPKey, serverKeys: SRPKeyPair, verifier: SRPKey) throws -> SRPKey {
-        guard clientPublicKey.number % configuration.N != BigNum(0) else { throw Error.nullClientKey }
+        guard clientPublicKey.number % configuration.N != BigNum(0) else { throw SRPServerError.nullClientKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
         let u = SRP<H>.calculateU(clientPublicKey: clientPublicKey.bytes, serverPublicKey: serverKeys.public.bytes, pad: configuration.sizeN)
@@ -86,7 +78,7 @@ public struct SRPServer<H: HashFunction> {
             serverPublicKey: serverPublicKey,
             sharedSecret: sharedSecret
         )
-        guard clientProof == proof else { throw Error.invalidClientProof }
+        guard clientProof == proof else { throw SRPServerError.invalidClientProof }
         return SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
     }
 
@@ -110,7 +102,7 @@ public struct SRPServer<H: HashFunction> {
             serverPublicKey: serverPublicKey,
             hashSharedSecret: hashSharedSecret
         )
-        guard clientProof == proof else { throw Error.invalidClientProof }
+        guard clientProof == proof else { throw SRPServerError.invalidClientProof }
         return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret)
     }
 }
