@@ -26,5 +26,10 @@ extension SRPKey: Equatable { }
 public struct SRPKeyPair {
     public let `public`: SRPKey
     public let `private`: SRPKey
+
+    public init(`public`: SRPKey, `private`: SRPKey) {
+        self.private = `private`
+        self.public = `public`
+    }
 }
 
