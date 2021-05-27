@@ -22,9 +22,19 @@ public struct SRPKey {
 
 extension SRPKey: Equatable { }
 
-/// contains a private and a public key
+/// Contains a private and a public key
 public struct SRPKeyPair {
     public let `public`: SRPKey
     public let `private`: SRPKey
+
+
+    /// Initialise a SRPKeyPair object
+    /// - Parameters:
+    ///   - public: The public key of the key pair
+    ///   - private: The private key of the key pair
+    public init(`public`: SRPKey, `private`: SRPKey) {
+        self.private = `private`
+        self.public = `public`
+    }
 }
 
