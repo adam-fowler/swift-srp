@@ -81,7 +81,11 @@ If at any point any of these functions fail the process should be aborted.
 
 # Compatibility
 
-I believe this library is compliant with RFC5054 and should work with any server implementing this. I have verified this library against the example data in RFC5054, the Mozilla test vectors in https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#SRP_Verifier and also against the Python library [srptools](https://github.com/idlesign/srptools). 
+The library is compliant with RFC5054 and should work with any server implementing this. The library has been verified against 
+- example data in RFC5054
+- Mozilla test vectors in https://wiki.mozilla.org/Identity/AttachedServices/KeyServerProtocol#SRP_Verifier
+- Python library [srptools](https://github.com/idlesign/srptools)
+- Typescript library [tssrp6a](https://github.com/midonet/tssrp6a)
 
 ## Proof of secret
 
