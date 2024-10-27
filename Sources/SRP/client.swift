@@ -93,22 +93,39 @@ public struct SRPClient<H: HashFunction> {
         return SRP<H>.calculateClientProof(configuration: configuration, username: username, salt: salt, clientPublicKey: clientPublicKey, serverPublicKey: serverPublicKey, hashSharedSecret: hashSharedSecret)
     }
     
-    /// If the server returns that the client verification code was valiid it will also return a server verification code that the client can use to verify the server is correct
+    /// If the server returns that the client verification code was valid it will also return a server 
+    /// verification code that the client can use to verify the server is correct. This is the calculation 
+    /// to verify it is correct
     ///
     /// - Parameters:
-    ///   - code: Verification code returned by server
-    ///   - state: Authentication state
-    /// - Throws: `requiresVerificationKey`, `invalidServerCode`
-    public func verifyServerProof(serverProof: [UInt8], clientProof: [UInt8], clientKeys: SRPKeyPair, sharedSecret: SRPKey) throws {
+    ///   - clientPublicKey: Client public key
+    ///   - clientProof: Client proof
+    ///   - sharedSecret: Shared secret
+    public func calculateServerProof(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: SRPKey) -> [UInt8] {
         let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
         // get out version of server proof
-        let HAMK = SRP<H>.calculateServerVerification(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: hashSharedSecret)
+        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret)
+    }
+    
+    /// If the server returns that the client verification code was valid it will also return a server 
+    /// verification code that the client can use to verify the server is correct
+    ///
+    /// - Parameters:
+    ///   - clientProof: Server proof
+    ///   - clientProof: Client proof
+    ///   - clientKeys: Client keys
+    ///   - sharedSecret: Shared secret
+    /// - Throws: `requiresVerificationKey`, `invalidServerCode`
+    public func verifyServerProof(serverProof: [UInt8], clientProof: [UInt8], clientKeys: SRPKeyPair, sharedSecret: SRPKey) throws {
+        // get our version of server proof
+        let HAMK = calculateServerProof(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: sharedSecret)
         // is it the same
         guard serverProof == HAMK else { throw SRPClientError.invalidServerCode }
     }
     
-    /// Generate salt and password verifier from username and password. When creating your user instead of passing your password to the server, you
-    /// pass the salt and password verifier values. In this way the server never knows your password so can never leak it.
+    /// Generate salt and password verifier from username and password. When creating your user instead of 
+    /// passing your password to the server, you pass the salt and password verifier values. In this way the 
+    /// server never knows your password so can never leak it.
     ///
     /// - Parameters:
     ///   - username: username
