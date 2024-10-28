@@ -1,5 +1,6 @@
 import BigNum
 import Crypto
+import Foundation
 
 /// Manages the client side of Secure Remote Password
 ///
@@ -51,8 +52,21 @@ public struct SRPClient<H: HashFunction> {
         let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
         return SRPKey(sharedSecret)
     }
-    
-    
+
+    /// return shared secret given the password as Data, B value and salt from the server
+    /// - Parameters:
+    ///   - password: password
+    ///   - salt: salt
+    ///   - clientKeys: client public/private keys
+    ///   - serverPublicKey: server public key
+    /// - Throws: `nullServerKey`
+    /// - Returns: shared secret
+    public func calculateSharedSecret(password: Data, salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
+            let message = [UInt8](Data([0x3a]) + password)
+            let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+            return SRPKey(sharedSecret)
+    }
+
     /// calculate proof of shared secret to send to server
     /// - Parameters:
     ///   - clientPublicKey: client public key
