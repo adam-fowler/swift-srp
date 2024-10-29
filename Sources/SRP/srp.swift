@@ -15,7 +15,7 @@ extension Array where Element == UInt8 {
 public struct SRP<H: HashFunction> {
 
     /// calculate u = H(clientPublicKey | serverPublicKey)
-    public static func calculateU(clientPublicKey: [UInt8], serverPublicKey: [UInt8]) -> BigNum {
+    static func calculateU(clientPublicKey: [UInt8], serverPublicKey: [UInt8]) -> BigNum {
         BigNum(bytes: [UInt8].init(H.hash(data: clientPublicKey + serverPublicKey)))
     }
     
