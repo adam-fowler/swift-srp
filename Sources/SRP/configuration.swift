@@ -18,7 +18,7 @@ public struct SRPConfiguration<H: HashFunction> {
         self.N = prime.group
         self.sizeN = Int(self.N.numBits() + 7) / 8
         self.g = prime.generator
-        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + SRP<H>.pad(self.g.bytes, to: sizeN))))
+        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes.pad(to: sizeN))))
     }
     
     /// Initialise SRPConfiguration with your own prime and multiplicative group generator
@@ -29,7 +29,7 @@ public struct SRPConfiguration<H: HashFunction> {
         self.N = N
         self.sizeN = Int(self.N.numBits() + 7) / 8
         self.g = g
-        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + SRP<H>.pad(self.g.bytes, to: sizeN))))
+        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes.pad(to: sizeN))))
     }
     
     public enum Prime {

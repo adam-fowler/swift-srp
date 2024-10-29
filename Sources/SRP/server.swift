@@ -55,7 +55,7 @@ public struct SRPServer<H: HashFunction> {
         guard clientPublicKey.number % configuration.N != BigNum(0) else { throw SRPServerError.nullClientKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
-        let u = SRP<H>.calculateU(clientPublicKey: clientPublicKey.bytes, serverPublicKey: serverKeys.public.bytes, pad: configuration.sizeN)
+        let u = SRP<H>.calculateU(clientPublicKey: clientPublicKey.bytes(padding: configuration.sizeN), serverPublicKey: serverKeys.public.bytes(padding: configuration.sizeN))
 
         // calculate S
         let S = ((clientPublicKey.number * verifier.number.power(u, modulus: configuration.N)).power(serverKeys.private.number, modulus: configuration.N))
@@ -76,10 +76,11 @@ public struct SRPServer<H: HashFunction> {
         let clientProof = SRP<H>.calculateSimpleClientProof(
             clientPublicKey: clientPublicKey,
             serverPublicKey: serverPublicKey,
-            sharedSecret: sharedSecret
+            sharedSecret: sharedSecret, 
+            padding: configuration.sizeN
         )
         guard clientProof == proof else { throw SRPServerError.invalidClientProof }
-        return SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
+        return SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret, padding: configuration.sizeN)
     }
 
     /// verify proof that client has shared secret and return a server verification proof. If verification fails a `invalidClientCode` error is thrown
@@ -94,7 +95,7 @@ public struct SRPServer<H: HashFunction> {
     /// - Throws: invalidClientCode
     /// - Returns: The server verification code
     public func verifyClientProof(proof: [UInt8], username: String, salt: [UInt8], clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) throws -> [UInt8] {
-        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
+        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes(padding: configuration.sizeN)))
         
         let clientProof = SRP<H>.calculateClientProof(
             configuration: configuration,
@@ -102,9 +103,10 @@ public struct SRPServer<H: HashFunction> {
             salt: salt,
             clientPublicKey: clientPublicKey,
             serverPublicKey: serverPublicKey,
-            hashSharedSecret: hashSharedSecret
+            hashSharedSecret: hashSharedSecret, 
+            padding: configuration.sizeN
         )
         guard clientProof == proof else { throw SRPServerError.invalidClientProof }
-        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret)
+        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret, padding: configuration.sizeN)
     }
 }
