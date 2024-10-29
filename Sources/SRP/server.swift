@@ -107,6 +107,6 @@ public struct SRPServer<H: HashFunction> {
             padding: configuration.sizeN
         )
         guard clientProof == proof else { throw SRPServerError.invalidClientProof }
-        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret, padding: configuration.sizeN)
+        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, hashSharedSecret: hashSharedSecret, padding: configuration.sizeN)
     }
 }

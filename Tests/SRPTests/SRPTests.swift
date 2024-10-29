@@ -98,7 +98,7 @@ final class SRPTests: XCTestCase {
         let secret = "d89740e18a9fb597aef8f2ecc0e66f4b31c2ae08".bytes(using: .hexadecimal)!
         let clientProof = "e1a8629a723039a61be91a173ab6260fc582192f".bytes(using: .hexadecimal)!
 
-        let serverProof = SRP<Insecure.SHA1>.calculateServerVerification(clientPublicKey: SRPKey(A), clientProof: clientProof, sharedSecret: secret, padding: 0)
+        let serverProof = SRP<Insecure.SHA1>.calculateServerVerification(clientPublicKey: SRPKey(A), clientProof: clientProof, hashSharedSecret: secret, padding: 0)
 
         XCTAssertEqual(serverProof.hexdigest(), "8342bd06bdf4d263de2df9a56da8e581fb38c769")
     }

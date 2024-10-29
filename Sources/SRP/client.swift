@@ -104,7 +104,7 @@ public struct SRPClient<H: HashFunction> {
     public func calculateServerProof(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: SRPKey) -> [UInt8] {
         let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes(padding: configuration.sizeN)))
         // get out version of server proof
-        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: hashSharedSecret, padding: configuration.sizeN)
+        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, hashSharedSecret: hashSharedSecret, padding: configuration.sizeN)
     }
     
     /// If the server returns that the client verification code was valid it will also return a server 

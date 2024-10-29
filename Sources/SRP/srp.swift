@@ -61,8 +61,8 @@ public struct SRP<H: HashFunction> {
     }
 
     /// Calculate server verification code H(A | M1 | K)
-    static func calculateServerVerification(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: [UInt8], padding: Int) -> [UInt8] {
-        let HAMK = H.hash(data: clientPublicKey.bytes(padding: padding) + clientProof + sharedSecret)
+    static func calculateServerVerification(clientPublicKey: SRPKey, clientProof: [UInt8], hashSharedSecret: [UInt8], padding: Int) -> [UInt8] {
+        let HAMK = H.hash(data: clientPublicKey.bytes(padding: padding) + clientProof + hashSharedSecret)
         return [UInt8](HAMK)
     }
 }
