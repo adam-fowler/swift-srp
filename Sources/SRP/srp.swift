@@ -1,16 +1,6 @@
 import BigNum
 import Crypto
 
-extension Array where Element == UInt8 {
-    func pad(to size: Int) -> [UInt8] {
-        let padSize = size - self.count
-        guard padSize > 0 else { return self }
-        // create prefix and return prefix + data
-        let prefix: [UInt8] = (1...padSize).reduce([]) { result,_ in return result + [0] }
-        return prefix + self
-    }
-}
-
 /// Contains common code used by both client and server SRP code
 public struct SRP<H: HashFunction> {
 
