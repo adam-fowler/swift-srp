@@ -52,6 +52,19 @@ public struct SRPClient<H: HashFunction> {
         return SRPKey(sharedSecret)
     }
     
+    /// return shared secret given a binary password, B value and salt from the server
+    /// - Parameters:
+    ///   - password: password
+    ///   - salt: salt
+    ///   - clientKeys: client public/private keys
+    ///   - serverPublicKey: server public key
+    /// - Throws: `nullServerKey`
+    /// - Returns: shared secret
+    public func calculateSharedSecret(password: [UInt8], salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
+        let message = [0x3a] + password
+        let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+        return SRPKey(sharedSecret)
+    }
     
     /// calculate proof of shared secret to send to server
     /// - Parameters:
@@ -139,7 +152,7 @@ public struct SRPClient<H: HashFunction> {
 }
 
 extension SRPClient {
-    /// return shared secret given the username, password, salt from server, client keys, and B value
+    /// return shared secret given the message (username:password), salt from server, client keys, and B value
     func calculateSharedSecret(message: [UInt8], salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> BigNum {
         guard serverPublicKey.number % configuration.N != BigNum(0) else { throw SRPClientError.nullServerKey }
 
