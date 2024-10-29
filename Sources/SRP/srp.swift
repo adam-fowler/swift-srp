@@ -27,7 +27,7 @@ public struct SRP<H: HashFunction> {
         sharedSecret: SRPKey,
         padding: Int
     ) -> [UInt8] {
-        let HABK = H.hash(data: clientPublicKey.bytes(padding: padding) + clientProof + sharedSecret.bytes(padding: padding))
+        let HABK = H.hash(data: clientPublicKey.bytes(padding: padding) + clientProof.pad(to: padding) + sharedSecret.bytes(padding: padding))
         return [UInt8](HABK)
     }
 
