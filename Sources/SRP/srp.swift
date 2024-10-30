@@ -19,8 +19,7 @@ public struct SRP<H: HashFunction> {
         hashSharedSecret: [UInt8]
     ) -> [UInt8] {
         // M = H(H(N)^ H(g)) | H(username) | salt | client key | server key | H(shared secret))
-        let g = SRPKey(configuration.g, padding: configuration.sizeN)
-        let N_xor_g = [UInt8](H.hash(data: configuration.N.bytes)) ^ [UInt8](H.hash(data: g.bytes))
+        let N_xor_g = [UInt8](H.hash(data: configuration.N.bytes)) ^ [UInt8](H.hash(data: configuration.g.bytes.pad(to: configuration.sizeN)))
         let hashUser = H.hash(data: [UInt8](username.utf8))
         let M1 = [UInt8](N_xor_g) + hashUser + salt
         let M2 = clientPublicKey.bytes + serverPublicKey.bytes + hashSharedSecret
