@@ -6,7 +6,7 @@ public struct SRPConfiguration<H: HashFunction> {
     /// large safe prime
     public let N: BigNum
     /// multiplicative group generator
-    public let g: SRPKey
+    public let g: BigNum
     /// derived value from N and g. k = H( N | g )
     public let k: BigNum
     /// size in bytes of N
@@ -17,8 +17,8 @@ public struct SRPConfiguration<H: HashFunction> {
     public init(_ prime: Prime) {
         self.N = prime.group
         self.sizeN = Int(self.N.numBits() + 7) / 8
-        self.g = SRPKey(prime.generator, padding: self.sizeN)
-        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes)))
+        self.g = prime.generator
+        self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes.pad(to: sizeN))))
     }
     
     /// Initialise SRPConfiguration with your own prime and multiplicative group generator
@@ -28,7 +28,7 @@ public struct SRPConfiguration<H: HashFunction> {
     public init(N: BigNum, g: BigNum) {
         self.N = N
         self.sizeN = Int(self.N.numBits() + 7) / 8
-        self.g = SRPKey(g, padding: self.sizeN)
+        self.g = g
         self.k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes.pad(to: sizeN))))
     }
     

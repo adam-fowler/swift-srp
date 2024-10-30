@@ -33,7 +33,7 @@ public struct SRPServer<H: HashFunction> {
         var B: BigNum
         repeat {
             b = BigNum(bytes: SymmetricKey(size: .bits256))
-            B = (configuration.k * verifier.number + configuration.g.number.power(b, modulus: configuration.N)) % configuration.N
+            B = (configuration.k * verifier.number + configuration.g.power(b, modulus: configuration.N)) % configuration.N
         } while B % configuration.N == BigNum(0)
         
         return SRPKeyPair(public: SRPKey(B, padding: self.configuration.sizeN), private: SRPKey(b))

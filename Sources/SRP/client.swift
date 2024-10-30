@@ -32,7 +32,7 @@ public struct SRPClient<H: HashFunction> {
         var A: BigNum
         repeat {
             a = BigNum(bytes: SymmetricKey(size: .bits256))
-            A = configuration.g.number.power(a, modulus: configuration.N)
+            A = configuration.g.power(a, modulus: configuration.N)
         } while A % configuration.N == BigNum(0)
 
         return SRPKeyPair(public: SRPKey(A, padding: self.configuration.sizeN), private: SRPKey(a))
@@ -191,7 +191,7 @@ extension SRPClient {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         
         // calculate S = (B - k*g^x)^(a+u*x)
-        let S = (serverPublicKey.number - configuration.k * configuration.g.number.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
+        let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
         
         return .init(S, padding: self.configuration.sizeN)
     }
@@ -205,7 +205,7 @@ extension SRPClient {
     /// generate password verifier
     public func generatePasswordVerifier(message: [UInt8], salt: [UInt8]) -> BigNum {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
-        let verifier = configuration.g.number.power(x, modulus: configuration.N)
+        let verifier = configuration.g.power(x, modulus: configuration.N)
         return verifier
     }
 }
