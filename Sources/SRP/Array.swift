@@ -18,6 +18,16 @@ extension Array where Element: FixedWidthInteger {
     }
 }
 
+extension Array where Element == UInt8 {
+    func pad(to size: Int) -> [UInt8] {
+        let padSize = size - self.count
+        guard padSize > 0 else { return self }
+        // create prefix and return prefix + data
+        let prefix: [UInt8] = (1...padSize).reduce([]) { result,_ in return result + [0] }
+        return prefix + self
+    }
+}
+
 /// xor together the contents of two byte arrays
 func ^ (lhs: [UInt8], rhs: [UInt8]) -> [UInt8] {
     precondition(lhs.count == rhs.count, "Arrays are required to be the same size")
