@@ -1,5 +1,6 @@
 import BigNum
 import Crypto
+import Foundation
 
 /// Manages the client side of Secure Remote Password
 ///
@@ -27,14 +28,14 @@ public struct SRPClient<H: HashFunction> {
     /// Initiate the authentication process
     /// - Returns: An authentication state. The A value from this state should be sent to the server
     public func generateKeys() -> SRPKeyPair {
-        var a = BigNum()
-        var A = BigNum()
+        var a: BigNum
+        var A: BigNum
         repeat {
             a = BigNum(bytes: SymmetricKey(size: .bits256))
-            A = configuration.g.power(a, modulus: configuration.N)
+            A = configuration.g.number.power(a, modulus: configuration.N)
         } while A % configuration.N == BigNum(0)
 
-        return SRPKeyPair(public: SRPKey(A), private: SRPKey(a))
+        return SRPKeyPair(public: SRPKey(A, padding: self.configuration.sizeN), private: SRPKey(a))
     }
     
     /// return shared secret given the username, password, B value and salt from the server
@@ -46,10 +47,15 @@ public struct SRPClient<H: HashFunction> {
     ///   - serverPublicKey: server public key
     /// - Throws: `nullServerKey`
     /// - Returns: shared secret
-    public func calculateSharedSecret(username: String, password: String, salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
+    public func calculateSharedSecret(
+        username: String, 
+        password: String, 
+        salt: [UInt8], 
+        clientKeys: SRPKeyPair, 
+        serverPublicKey: SRPKey
+    ) throws -> SRPKey {
         let message = [UInt8]("\(username):\(password)".utf8)
-        let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
-        return SRPKey(sharedSecret)
+        return try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
     }
     
     /// return shared secret given a binary password, B value and salt from the server
@@ -60,50 +66,44 @@ public struct SRPClient<H: HashFunction> {
     ///   - serverPublicKey: server public key
     /// - Throws: `nullServerKey`
     /// - Returns: shared secret
-    public func calculateSharedSecret(password: [UInt8], salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> SRPKey {
+    public func calculateSharedSecret(
+        password: [UInt8], 
+        salt: [UInt8], 
+        clientKeys: SRPKeyPair, 
+        serverPublicKey: SRPKey
+    ) throws -> SRPKey {
         let message = [0x3a] + password
-        let sharedSecret = try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
-        return SRPKey(sharedSecret)
+        return try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
     }
     
     /// calculate proof of shared secret to send to server
     /// - Parameters:
-    ///   - clientPublicKey: client public key
-    ///   - serverPublicKey: server public key
-    ///   - sharedSecret: shared secret
-    /// - Returns: The client verification code which should be passed to the server
-    public func calculateSimpleClientProof(clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) -> [UInt8] {
-        // get verification code
-        return SRP<H>.calculateSimpleClientProof(clientPublicKey: clientPublicKey, serverPublicKey: serverPublicKey, sharedSecret: sharedSecret, padding: configuration.sizeN)
-    }
-    
-    /// If the server returns that the client verification code was valiid it will also return a server verification code that the client can use to verify the server is correct
-    ///
-    /// - Parameters:
-    ///   - code: Verification code returned by server
-    ///   - state: Authentication state
-    /// - Throws: `requiresVerificationKey`, `invalidServerCode`
-    public func verifySimpleServerProof(serverProof: [UInt8], clientProof: [UInt8], clientKeys: SRPKeyPair, sharedSecret: SRPKey) throws {
-        // get out version of server proof
-        let HAMS = SRP<H>.calculateSimpleServerVerification(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: sharedSecret, padding: configuration.sizeN)
-        // is it the same
-        guard serverProof == HAMS else { throw SRPClientError.invalidServerCode }
-    }
-
-    /// calculate proof of shared secret to send to server
-    /// - Parameters:
-    ///   - username: username
+    ///   - username: Username
     ///   - salt: The salt value associated with the user returned by the server
-    ///   - clientPublicKey: client public key
+    ///   - clientPublicKey: Client public key
     ///   - serverPublicKey: server public key
     ///   - sharedSecret: shared secret
     /// - Returns: The client verification code which should be passed to the server
-    public func calculateClientProof(username: String, salt: [UInt8], clientPublicKey: SRPKey, serverPublicKey: SRPKey, sharedSecret: SRPKey) -> [UInt8] {
-
-        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes(padding: configuration.sizeN)))
-
+    public func calculateClientProof(
+        username: String, 
+        salt: [UInt8], 
+        clientPublicKey: SRPKey, 
+        serverPublicKey: SRPKey, 
+        sharedSecret: SRPKey
+    ) -> [UInt8] {
+        let clientPublicKey = clientPublicKey.with(padding: self.configuration.sizeN)
+        let serverPublicKey = serverPublicKey.with(padding: self.configuration.sizeN)
+        let sharedSecret = sharedSecret.with(padding: self.configuration.sizeN)
+        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
         // get verification code
-        return SRP<H>.calculateClientProof(configuration: configuration, username: username, salt: salt, clientPublicKey: clientPublicKey, serverPublicKey: serverPublicKey, hashSharedSecret: hashSharedSecret, padding: configuration.sizeN)
+        return SRP<H>.calculateClientProof(
+            configuration: configuration, 
+            username: username, 
+            salt: salt, 
+            clientPublicKey: clientPublicKey, 
+            serverPublicKey: serverPublicKey, 
+            hashSharedSecret: hashSharedSecret
+        )
     }
     
     /// If the server returns that the client verification code was valid it will also return a server 
@@ -114,24 +114,39 @@ public struct SRPClient<H: HashFunction> {
     ///   - clientPublicKey: Client public key
     ///   - clientProof: Client proof
     ///   - sharedSecret: Shared secret
-    public func calculateServerProof(clientPublicKey: SRPKey, clientProof: [UInt8], sharedSecret: SRPKey) -> [UInt8] {
-        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes(padding: configuration.sizeN)))
+    public func calculateServerProof(
+        clientPublicKey: SRPKey, 
+        clientProof: [UInt8], 
+        sharedSecret: SRPKey
+    ) -> [UInt8] {
+        let clientPublicKey = clientPublicKey.with(padding: self.configuration.sizeN)
+        let sharedSecret = sharedSecret.with(padding: self.configuration.sizeN)
+        let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
         // get out version of server proof
-        return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, hashSharedSecret: hashSharedSecret, padding: configuration.sizeN)
+        return SRP<H>.calculateServerVerification(
+            clientPublicKey: clientPublicKey, 
+            clientProof: clientProof, 
+            hashSharedSecret: hashSharedSecret
+        )
     }
     
     /// If the server returns that the client verification code was valid it will also return a server 
     /// verification code that the client can use to verify the server is correct
     ///
     /// - Parameters:
-    ///   - clientProof: Server proof
+    ///   - serverProof: Server proof
     ///   - clientProof: Client proof
-    ///   - clientKeys: Client keys
+    ///   - clientPublicKey: Client public key
     ///   - sharedSecret: Shared secret
     /// - Throws: `requiresVerificationKey`, `invalidServerCode`
-    public func verifyServerProof(serverProof: [UInt8], clientProof: [UInt8], clientKeys: SRPKeyPair, sharedSecret: SRPKey) throws {
+    public func verifyServerProof(
+        serverProof: [UInt8], 
+        clientProof: [UInt8], 
+        clientPublicKey: SRPKey, 
+        sharedSecret: SRPKey
+    ) throws {
         // get our version of server proof
-        let HAMK = calculateServerProof(clientPublicKey: clientKeys.public, clientProof: clientProof, sharedSecret: sharedSecret)
+        let HAMK = calculateServerProof(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
         // is it the same
         guard serverProof == HAMK else { throw SRPClientError.invalidServerCode }
     }
@@ -147,26 +162,38 @@ public struct SRPClient<H: HashFunction> {
     public func generateSaltAndVerifier(username: String, password: String) -> (salt: [UInt8], verifier: SRPKey) {
         let salt = [UInt8].random(count: 16)
         let verifier = generatePasswordVerifier(username: username, password: password, salt: salt)
-        return (salt: salt, verifier: SRPKey(verifier))
+        return (salt: salt, verifier: SRPKey(verifier, padding: configuration.sizeN))
+    }
+
+    ///  Hash data using same hash function that SRP uses
+    /// - Parameter data: Data to be hashed
+    /// - Returns: Hashed data
+    @inlinable public func hash<D>(data: D) -> H.Digest where D : DataProtocol {
+        H.hash(data: data)
     }
 }
 
 extension SRPClient {
     /// return shared secret given the message (username:password), salt from server, client keys, and B value
-    func calculateSharedSecret(message: [UInt8], salt: [UInt8], clientKeys: SRPKeyPair, serverPublicKey: SRPKey) throws -> BigNum {
+    func calculateSharedSecret(
+        message: [UInt8], 
+        salt: [UInt8], 
+        clientKeys: SRPKeyPair, 
+        serverPublicKey: SRPKey
+    ) throws -> SRPKey {
         guard serverPublicKey.number % configuration.N != BigNum(0) else { throw SRPClientError.nullServerKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
-        let u = SRP<H>.calculateU(clientPublicKey: clientKeys.public.bytes(padding: configuration.sizeN), serverPublicKey: serverPublicKey.bytes(padding: configuration.sizeN))
+        let u = SRP<H>.calculateU(clientPublicKey: clientKeys.public.bytes, serverPublicKey: serverPublicKey.bytes)
 
         guard u != 0 else { throw SRPClientError.nullServerKey }
         
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         
         // calculate S = (B - k*g^x)^(a+u*x)
-        let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
+        let S = (serverPublicKey.number - configuration.k * configuration.g.number.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
         
-        return S
+        return .init(S, padding: self.configuration.sizeN)
     }
     
     /// generate password verifier
@@ -178,7 +205,7 @@ extension SRPClient {
     /// generate password verifier
     public func generatePasswordVerifier(message: [UInt8], salt: [UInt8]) -> BigNum {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
-        let verifier = configuration.g.power(x, modulus: configuration.N)
+        let verifier = configuration.g.number.power(x, modulus: configuration.N)
         return verifier
     }
 }
