@@ -3,12 +3,11 @@ import Crypto
 
 /// Contains common code used by both client and server SRP code
 public struct SRP<H: HashFunction> {
-
     /// calculate u = H(clientPublicKey | serverPublicKey)
     static func calculateU(clientPublicKey: [UInt8], serverPublicKey: [UInt8]) -> BigNum {
-        BigNum(bytes: [UInt8].init(H.hash(data: clientPublicKey + serverPublicKey)))
+        BigNum(bytes: [UInt8](H.hash(data: clientPublicKey + serverPublicKey)))
     }
-    
+
     /// Calculate client verification code H(H(N)^ H(g)) | H(username) | salt | A | B | H(S))
     static func calculateClientProof(
         configuration: SRPConfiguration<H>,

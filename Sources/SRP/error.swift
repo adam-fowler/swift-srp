@@ -11,11 +11,10 @@ public enum SRPClientError: Swift.Error {
 }
 
 /// Errors thrown by SRPServer
-///Errors thrown by SRPServer
+/// Errors thrown by SRPServer
 public enum SRPServerError: Swift.Error {
     /// the modulus of the client key and N generated a zero
     case nullClientKey
     /// client proof of the shared secret was invalid or wrong
     case invalidClientProof
 }
-

@@ -9,22 +9,22 @@ public struct SRPKey {
     /// padding
     public let padding: Int
     /// Representation as a byte array
-    public var bytes: [UInt8] { number.bytes.pad(to: self.padding) }
+    public var bytes: [UInt8] { number.bytes.pad(to: padding) }
     /// Representation as a hex string
-    public var hex: String { number.bytes.pad(to: self.padding).hexdigest() }
+    public var hex: String { number.bytes.pad(to: padding).hexdigest() }
 
     /// Initialize with an array of bytes
     @inlinable public init<C: Collection & ContiguousBytes>(_ bytes: C, padding: Int? = nil) {
-        self.number = BigNum(bytes: bytes)
+        number = BigNum(bytes: bytes)
         self.padding = padding ?? bytes.count
     }
-    
+
     /// Initialize with a crypto digest
     @inlinable public init<D: Digest>(_ digest: D, padding: Int? = nil) {
-        self.number = BigNum(bytes: digest)
+        number = BigNum(bytes: digest)
         self.padding = padding ?? D.byteCount
     }
-    
+
     /// Initialize with a hex string
     @inlinable public init?(hex: String, padding: Int = 0) {
         guard let number = BigNum(hex: hex) else { return nil }
@@ -40,11 +40,11 @@ public struct SRPKey {
 
     /// Return SRPKey with padding
     func with(padding: Int) -> SRPKey {
-        .init(self.number, padding: padding)
+        .init(number, padding: padding)
     }
 }
 
-extension SRPKey: Equatable { }
+extension SRPKey: Equatable {}
 
 /// Contains a private and a public key
 public struct SRPKeyPair {
@@ -55,9 +55,8 @@ public struct SRPKeyPair {
     /// - Parameters:
     ///   - public: The public key of the key pair
     ///   - private: The private key of the key pair
-    init(`public`: SRPKey, `private`: SRPKey) {
+    init(public: SRPKey, private: SRPKey) {
         self.private = `private`
         self.public = `public`
     }
 }
-

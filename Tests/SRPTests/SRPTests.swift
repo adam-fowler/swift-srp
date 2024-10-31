@@ -1,10 +1,9 @@
-import XCTest
 import BigNum
 import Crypto
 @testable import SRP
+import XCTest
 
 final class SRPTests: XCTestCase {
-
     func testSRPSharedSecret() {
         let username = "adamfowler"
         let password = "testpassword"
@@ -23,12 +22,14 @@ final class SRPTests: XCTestCase {
                 password: password,
                 salt: salt,
                 clientKeys: clientKeys,
-                serverPublicKey: serverKeys.public)
+                serverPublicKey: serverKeys.public
+            )
 
             let serverSharedSecret = try server.calculateSharedSecret(
                 clientPublicKey: clientKeys.public,
                 serverKeys: serverKeys,
-                verifier: verifier)
+                verifier: verifier
+            )
 
             XCTAssertEqual(sharedSecret, serverSharedSecret)
         } catch {
@@ -88,11 +89,11 @@ final class SRPTests: XCTestCase {
         let B = BigNum(hex: "2bfc8559a022497f1254af3c76786b95cb0dfb449af15501aa51eefe78947d7ef06df4fcc07a899bcaae0e552ca72c7a1f3016f3ec357a86a1428dad9f98cb8a69d405404e57e9aaf01e51a46a73b3fc7bc1d212569e4a882ae6d878599e098c89033838ec069fe368a49461f531e5b4662700d56d8c252d0aea9da6abe9b014")!
         let secret = "b6288955afd690a13686d65886b5f82018515df3".bytes(using: .hexadecimal)!
         let clientProof = SRP<Insecure.SHA1>.calculateClientProof(
-            configuration: configuration, 
-            username: username, 
-            salt: salt, 
-            clientPublicKey: SRPKey(A, padding: configuration.sizeN), 
-            serverPublicKey: SRPKey(B, padding: configuration.sizeN), 
+            configuration: configuration,
+            username: username,
+            salt: salt,
+            clientPublicKey: SRPKey(A, padding: configuration.sizeN),
+            serverPublicKey: SRPKey(B, padding: configuration.sizeN),
             hashSharedSecret: secret
         )
 
@@ -106,8 +107,8 @@ final class SRPTests: XCTestCase {
         let clientProof = "e1a8629a723039a61be91a173ab6260fc582192f".bytes(using: .hexadecimal)!
 
         let serverProof = SRP<Insecure.SHA1>.calculateServerVerification(
-            clientPublicKey: SRPKey(A), 
-            clientProof: clientProof, 
+            clientPublicKey: SRPKey(A),
+            clientProof: clientProof,
             hashSharedSecret: secret
         )
 
@@ -145,10 +146,10 @@ final class SRPTests: XCTestCase {
         XCTAssertEqual(u.hex, "CE38B9593487DA98554ED47D70A7AE5F462EF019".lowercased())
 
         let sharedSecret = try client.calculateSharedSecret(
-            username: username, 
-            password: password, 
-            salt: salt, 
-            clientKeys: SRPKeyPair(public: SRPKey(A, padding: configuration.sizeN), private: SRPKey(a)), 
+            username: username,
+            password: password,
+            salt: salt,
+            clientKeys: SRPKeyPair(public: SRPKey(A, padding: configuration.sizeN), private: SRPKey(a)),
             serverPublicKey: SRPKey(B, padding: configuration.sizeN)
         )
 
@@ -169,27 +170,27 @@ final class SRPTests: XCTestCase {
         let verifier = client.generatePasswordVerifier(message: message, salt: salt)
 
         XCTAssertEqual(verifier.hex, "173ffa0263e63ccfd6791b8ee2a40f048ec94cd95aa8a3125726f9805e0c8283c658dc0b607fbb25db68e68e93f2658483049c68af7e8214c49fde2712a775b63e545160d64b00189a86708c69657da7a1678eda0cd79f86b8560ebdb1ffc221db360eab901d643a75bf1205070a5791230ae56466b8c3c1eb656e19b794f1ea0d2a077b3a755350208ea0118fec8c4b2ec344a05c66ae1449b32609ca7189451c259d65bd15b34d8729afdb5faff8af1f3437bbdc0c3d0b069a8ab2a959c90c5a43d42082c77490f3afcc10ef5648625c0605cdaace6c6fdc9e9a7e6635d619f50af7734522470502cab26a52a198f5b00a279858916507b0b4e9ef9524d6")
-        
+
         let b = BigNum(hex: "00f3000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f")!
         // copied from server.swift
         let B = (configuration.k * verifier + configuration.g.power(b, modulus: configuration.N)) % configuration.N
-        
+
         XCTAssertEqual(SRPKey(B, padding: configuration.sizeN).hex, "0022ce5a7b9d81277172caa20b0f1efb4643b3becc53566473959b07b790d3c3f08650d5531c19ad30ebb67bdb481d1d9cf61bf272f8439848fdda58a4e6abc5abb2ac496da5098d5cbf90e29b4b110e4e2c033c70af73925fa37457ee13ea3e8fde4ab516dff1c2ae8e57a6b264fb9db637eeeae9b5e43dfaba9b329d3b8770ce89888709e026270e474eef822436e6397562f284778673a1a7bc12b6883d1c21fbc27ffb3dbeb85efda279a69a19414969113f10451603065f0a012666645651dde44a52f4d8de113e2131321df1bf4369d2585364f9e536c39a4dce33221be57d50ddccb4384e3612bbfd03a268a36e4f7e01de651401e108cc247db50392")
-        
+
         let a = BigNum(hex: "00f2000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d3d7")!
         // copied from client.swift
         let A = configuration.g.power(a, modulus: configuration.N)
-        
+
         XCTAssertEqual(SRPKey(A, padding: configuration.sizeN).hex, "007da76cb7e77af5ab61f334dbd5a958513afcdf0f47ab99271fc5f7860fe2132e5802ca79d2e5c064bb80a38ee08771c98a937696698d878d78571568c98a1c40cc6e7cb101988a2f9ba3d65679027d4d9068cb8aad6ebff0101bab6d52b5fdfa81d2ed48bba119d4ecdb7f3f478bd236d5749f2275e9484f2d0a9259d05e49d78a23dd26c60bfba04fd346e5146469a8c3f010a627be81c58ded1caaef2363635a45f97ca0d895cc92ace1d09a99d6beb6b0dc0829535c857a419e834db12864cd6ee8a843563b0240520ff0195735cd9d316842d5d3f8ef7209a0bb4b54ad7374d73e79be2c3975632de562c596470bb27bad79c3e2fcddf194e1666cb9fc")
-        
+
         let u = SRP<SHA256>.calculateU(clientPublicKey: A.bytes.pad(to: configuration.sizeN), serverPublicKey: B.bytes.pad(to: configuration.sizeN))
 
         XCTAssertEqual(u.hex, "b284aa1064e8775150da6b5e2147b47ca7df505bed94a6f4bb2ad873332ad732")
 
         let sharedSecret = try client.calculateSharedSecret(
-            message: message, 
-            salt: salt, 
-            clientKeys: SRPKeyPair(public: SRPKey(A, padding: configuration.sizeN), private: SRPKey(a)), 
+            message: message,
+            salt: salt,
+            clientKeys: SRPKeyPair(public: SRPKey(A, padding: configuration.sizeN), private: SRPKey(a)),
             serverPublicKey: SRPKey(B, padding: configuration.sizeN)
         )
 
@@ -199,7 +200,7 @@ final class SRPTests: XCTestCase {
 
         XCTAssertEqual([UInt8](clientProof).hexdigest(), "27949ec1e0f1625633436865edb037e23eb6bf5cb91873f2a2729373c2039008")
     }
-    
+
     static var allTests = [
         ("testSRPSharedSecret", testSRPSharedSecret),
         ("testVerifySRP", testVerifySRP),
@@ -216,15 +217,15 @@ extension String {
         case hexadecimal
     }
 
-    func bytes(using encoding:ExtendedEncoding) -> [UInt8]? {
-        guard self.count % 2 == 0 else { return nil }
+    func bytes(using _: ExtendedEncoding) -> [UInt8]? {
+        guard count % 2 == 0 else { return nil }
 
         var bytes: [UInt8] = []
 
         var indexIsEven = true
-        for i in self.indices {
+        for i in indices {
             if indexIsEven {
-                let byteRange = i...self.index(after: i)
+                let byteRange = i ... index(after: i)
                 guard let byte = UInt8(self[byteRange], radix: 16) else { return nil }
                 bytes.append(byte)
             }

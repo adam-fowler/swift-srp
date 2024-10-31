@@ -47,7 +47,7 @@ let clientSharedSecret = try client.calculateSharedSecret(
 let clientProof = client.calculateClientProof(
     username: username, 
     salt: salt, 
-    clientPublicKey: clientKeys.public, 
+    clientPublicKey: clientPublicKey, 
     serverPublicKey: serverPublicKey, 
     sharedSecret: clientSharedSecret
 )
@@ -64,7 +64,7 @@ let serverProof = try server.verifyClientProof(
     username: username, 
     salt: salt, 
     clientPublicKey: clientPublicKey, 
-    serverPublicKey: serverKeys.public, 
+    serverPublicKey: serverPublicKey, 
     sharedSecret: serverSharedSecret
 )
 ```
@@ -73,7 +73,7 @@ And finally the client can verify the server proof is valid
 try client.verifyServerProof(
     serverProof: serverProof, 
     clientProof: clientProof, 
-    clientKeys: clientKeys, 
+    clientPublicKey: clientPublicKey, 
     sharedSecret: clientSharedSecret
 )
 ```
@@ -90,5 +90,3 @@ The library is compliant with RFC5054 and should work with any server implementi
 ## Proof of secret
 
 For generating the proof above I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
-
-I have also supplied a simple proof functions `server.verifySimpleClientProof` and `client.verifySimpleServerProof` which use the proof detailed in the Wikipedia [page](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol) on Secure Remote Password if you would prefer to use these.

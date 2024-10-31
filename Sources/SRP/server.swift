@@ -18,13 +18,13 @@ import Foundation
 public struct SRPServer<H: HashFunction> {
     /// configuration has to be the same as the client configuration
     public let configuration: SRPConfiguration<H>
-    
+
     /// Initialise SRPServer
     /// - Parameter configuration: configuration to use
     public init(configuration: SRPConfiguration<H>) {
         self.configuration = configuration
     }
-    
+
     /// generate public and private keys to be used in srp authentication
     /// - Parameter verifier: password verifier used to generate key pair
     /// - Returns: return public/private key pair
@@ -35,8 +35,8 @@ public struct SRPServer<H: HashFunction> {
             b = BigNum(bytes: SymmetricKey(size: .bits256))
             B = (configuration.k * verifier.number + configuration.g.power(b, modulus: configuration.N)) % configuration.N
         } while B % configuration.N == BigNum(0)
-        
-        return SRPKeyPair(public: SRPKey(B, padding: self.configuration.sizeN), private: SRPKey(b))
+
+        return SRPKeyPair(public: SRPKey(B, padding: configuration.sizeN), private: SRPKey(b))
     }
 
     /// calculate the shared secret
@@ -46,11 +46,11 @@ public struct SRPServer<H: HashFunction> {
     ///   - verifier: Password verifier
     /// - Returns: shared secret
     public func calculateSharedSecret(
-        clientPublicKey: SRPKey, 
-        serverKeys: SRPKeyPair, 
+        clientPublicKey: SRPKey,
+        serverKeys: SRPKeyPair,
         verifier: SRPKey
     ) throws -> SRPKey {
-        let clientPublicKey = clientPublicKey.with(padding: self.configuration.sizeN)
+        let clientPublicKey = clientPublicKey.with(padding: configuration.sizeN)
         guard clientPublicKey.number % configuration.N != BigNum(0) else { throw SRPServerError.nullClientKey }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
@@ -58,8 +58,8 @@ public struct SRPServer<H: HashFunction> {
 
         // calculate S
         let S = ((clientPublicKey.number * verifier.number.power(u, modulus: configuration.N)).power(serverKeys.private.number, modulus: configuration.N))
-        
-        return SRPKey(S, padding: self.configuration.sizeN)
+
+        return SRPKey(S, padding: configuration.sizeN)
     }
 
     /// verify proof that client has shared secret and return a server verification proof. If verification fails a `invalidClientCode` error is thrown
@@ -74,18 +74,18 @@ public struct SRPServer<H: HashFunction> {
     /// - Throws: invalidClientCode
     /// - Returns: The server verification code
     public func verifyClientProof(
-        proof: [UInt8], 
-        username: String, 
-        salt: [UInt8], 
-        clientPublicKey: SRPKey, 
-        serverPublicKey: SRPKey, 
+        proof: [UInt8],
+        username: String,
+        salt: [UInt8],
+        clientPublicKey: SRPKey,
+        serverPublicKey: SRPKey,
         sharedSecret: SRPKey
     ) throws -> [UInt8] {
-        let clientPublicKey = clientPublicKey.with(padding: self.configuration.sizeN)
-        let serverPublicKey = serverPublicKey.with(padding: self.configuration.sizeN)
-        let sharedSecret = sharedSecret.with(padding: self.configuration.sizeN)
+        let clientPublicKey = clientPublicKey.with(padding: configuration.sizeN)
+        let serverPublicKey = serverPublicKey.with(padding: configuration.sizeN)
+        let sharedSecret = sharedSecret.with(padding: configuration.sizeN)
         let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
-        
+
         let clientProof = SRP<H>.calculateClientProof(
             configuration: configuration,
             username: username,
@@ -101,7 +101,7 @@ public struct SRPServer<H: HashFunction> {
     ///  Hash data using same hash function that SRP uses
     /// - Parameter data: Data to be hashed
     /// - Returns: Hashed data
-    @inlinable public func hash<D>(data: D) -> H.Digest where D : DataProtocol {
+    @inlinable public func hash<D>(data: D) -> H.Digest where D: DataProtocol {
         H.hash(data: data)
     }
 }

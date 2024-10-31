@@ -15,12 +15,13 @@ let package = Package(
         .library(name: "SRP", targets: ["SRP"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-crypto", "1.0.0"..<"5.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto", "1.0.0" ..< "5.0.0"),
         .package(url: "https://github.com/adam-fowler/big-num", from: "2.0.0"),
     ],
     targets: [
         .target(name: "SRP", dependencies: ["BigNum", "Crypto"]),
         .testTarget(
-            name: "SRPTests", dependencies: ["SRP"]),
+            name: "SRPTests", dependencies: ["SRP"]
+        ),
     ]
 )

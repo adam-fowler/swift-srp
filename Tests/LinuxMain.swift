@@ -1,5 +1,5 @@
-import XCTest
 import SRPTests
+import XCTest
 
 var tests = [XCTestCaseEntry]()
 tests += SRPTests.allTests()
