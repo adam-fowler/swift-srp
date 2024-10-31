@@ -87,6 +87,6 @@ The library is compliant with RFC5054 and should work with any server implementi
 - Python library [srptools](https://github.com/idlesign/srptools)
 - Typescript library [tssrp6a](https://github.com/midonet/tssrp6a)
 
-## Proof of secret
+## Proof of shared secret
 
-For generating the proof above I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
+For generating the client and server proofs of the shared secret I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) with everything padded out to the size of N, but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
