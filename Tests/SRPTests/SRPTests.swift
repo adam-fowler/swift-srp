@@ -4,11 +4,12 @@ import Crypto
 import XCTest
 
 final class SRPTests: XCTestCase {
-    func testHexKeyConversion() {
-        let hex = "0004f6789b"
-        XCTAssertEqual(hex, SRPKey(hex: hex)?.hex)
-        let hex2 = "4f6789b"
-        XCTAssertEqual("04f6789b", SRPKey(hex: hex2)?.hex)
+    func testKeyConversion() {
+        let hex = "00000102030405060708090a0b0c0d0e0f"
+        XCTAssertEqual(SRPKey(hex: hex)?.hex, hex)
+        let hex2 = "102030405060708090a0b0c0d0e0f"
+        XCTAssertEqual(SRPKey(hex: hex2)?.hex, "0102030405060708090a0b0c0d0e0f")
+        XCTAssertEqual(SRPKey(hex: hex)?.bytes, [0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
     }
 
     func testSRPSharedSecret() {
