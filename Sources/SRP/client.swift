@@ -96,7 +96,6 @@ public struct SRPClient<H: HashFunction> {
     ) -> [UInt8] {
         let clientPublicKey = clientPublicKey.with(padding: configuration.sizeN)
         let serverPublicKey = serverPublicKey.with(padding: configuration.sizeN)
-        let sharedSecret = sharedSecret.with(padding: configuration.sizeN)
         let hashSharedSecret = [UInt8](H.hash(data: sharedSecret.bytes))
         // get verification code
         return SRP<H>.calculateClientProof(
@@ -198,7 +197,7 @@ public extension SRPClient {
         // calculate S = (B - k*g^x)^(a+u*x)
         let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
 
-        return SRPKey(S)
+        return SRPKey(S, padding: configuration.sizeN)
     }
 
     /// generate password verifier

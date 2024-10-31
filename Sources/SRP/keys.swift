@@ -10,8 +10,12 @@ public struct SRPKey {
     public let padding: Int
     /// Representation as a byte array
     public var bytes: [UInt8] { number.bytes.pad(to: padding) }
+    /// Representation as a byte array without padding
+    public var unpaddedBytes: [UInt8] { number.bytes }
     /// Representation as a hex string
     public var hex: String { number.bytes.pad(to: padding).hexdigest() }
+    /// Representation as a hex string without padding
+    public var unpaddedHex: String { number.bytes.hexdigest() }
 
     /// Initialize with an array of bytes
     @inlinable public init<C: Collection & ContiguousBytes>(_ bytes: C, padding: Int? = nil) {
