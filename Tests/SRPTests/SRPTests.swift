@@ -4,6 +4,13 @@ import Crypto
 import XCTest
 
 final class SRPTests: XCTestCase {
+    func testHexKeyConversion() {
+        let hex = "0004f6789b"
+        XCTAssertEqual(hex, SRPKey(hex: hex)?.hex)
+        let hex2 = "4f6789b"
+        XCTAssertEqual("04f6789b", SRPKey(hex: hex2)?.hex)
+    }
+
     func testSRPSharedSecret() {
         let username = "adamfowler"
         let password = "testpassword"

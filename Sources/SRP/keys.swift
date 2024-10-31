@@ -26,10 +26,10 @@ public struct SRPKey {
     }
 
     /// Initialize with a hex string
-    @inlinable public init?(hex: String, padding: Int = 0) {
+    @inlinable public init?(hex: String, padding: Int? = nil) {
         guard let number = BigNum(hex: hex) else { return nil }
         self.number = number
-        self.padding = padding
+        self.padding = padding ?? (hex.count + 1) / 2
     }
 
     /// Initialize with a BigNum
