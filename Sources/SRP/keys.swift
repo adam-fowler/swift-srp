@@ -39,7 +39,7 @@ public struct SRPKey {
     }
 
     /// Return SRPKey with padding
-    func with(padding: Int) -> SRPKey {
+    @inlinable public func with(padding: Int) -> SRPKey {
         .init(number, padding: padding)
     }
 }
