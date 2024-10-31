@@ -59,7 +59,7 @@ public struct SRPServer<H: HashFunction> {
         // calculate S
         let S = ((clientPublicKey.number * verifier.number.power(u, modulus: configuration.N)).power(serverKeys.private.number, modulus: configuration.N))
 
-        return SRPKey(S, padding: configuration.sizeN)
+        return SRPKey(S)
     }
 
     /// verify proof that client has shared secret and return a server verification proof. If verification fails a `invalidClientCode` error is thrown

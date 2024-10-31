@@ -198,7 +198,7 @@ public extension SRPClient {
         // calculate S = (B - k*g^x)^(a+u*x)
         let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
 
-        return .init(S, padding: configuration.sizeN)
+        return SRPKey(S)
     }
 
     /// generate password verifier
