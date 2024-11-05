@@ -59,7 +59,7 @@ public struct SRPKeyPair {
     /// - Parameters:
     ///   - public: The public key of the key pair
     ///   - private: The private key of the key pair
-    init(public: SRPKey, private: SRPKey) {
+    @_spi(Testing) public init(public: SRPKey, private: SRPKey) {
         self.private = `private`
         self.public = `public`
     }
