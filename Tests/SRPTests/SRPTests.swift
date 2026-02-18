@@ -4,6 +4,52 @@ import Crypto
 import XCTest
 
 final class SRPTests: XCTestCase {
+    func testSecureRandomGeneration() {
+        // Test that random generation produces arrays of the correct size
+        let size1 = 16
+        let randomArray1 = [UInt8].random(count: size1)
+        XCTAssertEqual(randomArray1.count, size1, "Random array should have the requested size")
+        
+        let size2 = 32
+        let randomArray2 = [UInt8].random(count: size2)
+        XCTAssertEqual(randomArray2.count, size2, "Random array should have the requested size")
+        
+        // Test that random values are actually random (very unlikely to be the same)
+        let randomArray3 = [UInt8].random(count: 16)
+        let randomArray4 = [UInt8].random(count: 16)
+        XCTAssertNotEqual(randomArray3, randomArray4, "Random arrays should be different")
+        
+        // Test that all values are within valid UInt8 range
+        for byte in randomArray1 {
+            XCTAssertGreaterThanOrEqual(byte, UInt8.min)
+            XCTAssertLessThanOrEqual(byte, UInt8.max)
+        }
+    }
+    
+    func testSaltGenerationUsesSecureRandom() {
+        // Test that salt generation uses our secure random function
+        let configuration = SRPConfiguration<SHA256>(.N2048)
+        let client = SRPClient(configuration: configuration)
+        
+        // Generate multiple salts and verify they're different (high probability)
+        let salt1 = client.generateSaltAndVerifier(username: "test1", password: "password1").salt
+        let salt2 = client.generateSaltAndVerifier(username: "test2", password: "password2").salt
+        
+        XCTAssertEqual(salt1.count, 32, "Salt should be 32 bytes")
+        XCTAssertEqual(salt2.count, 32, "Salt should be 32 bytes")
+        
+        // Salts should be different (extremely high probability)
+        XCTAssertNotEqual(salt1, salt2, "Different salt generations should produce different values")
+        
+        // Verify salts contain non-zero values (they should be properly randomized)
+        let nonZeroCount1 = salt1.filter { $0 != 0 }.count
+        let nonZeroCount2 = salt2.filter { $0 != 0 }.count
+        
+        // With cryptographically secure random, we expect most bytes to be non-zero
+        XCTAssertGreaterThan(nonZeroCount1, salt1.count / 2, "Salt should contain significant non-zero bytes")
+        XCTAssertGreaterThan(nonZeroCount2, salt2.count / 2, "Salt should contain significant non-zero bytes")
+    }
+    
     func testKeyConversion() {
         let hex = "00000102030405060708090a0b0c0d0e0f"
         XCTAssertEqual(SRPKey(hex: hex)?.hex, hex)
@@ -217,6 +263,8 @@ final class SRPTests: XCTestCase {
         ("testServerSessionProof", testServerSessionProof),
         ("testRFC5054Appendix", testRFC5054Appendix),
         ("testMozillaTestVectors", testMozillaTestVectors),
+        ("testSecureRandomGeneration", testSecureRandomGeneration),
+        ("testSaltGenerationUsesSecureRandom", testSaltGenerationUsesSecureRandom),
     ]
 }
 
