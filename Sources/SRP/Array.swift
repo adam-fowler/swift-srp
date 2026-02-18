@@ -5,9 +5,7 @@ extension Array where Element: FixedWidthInteger {
     /// create array of random bytes using cryptographically secure random number generation
     static func random(count: Int) -> [Element] {
         var array = [Element](repeating: 0, count: count)
-        let status = array.withUnsafeMutableBytes { buffer in
-            SecRandomCopyBytes(kSecRandomDefault, count * MemoryLayout<Element>.stride, buffer.baseAddress!)
-        }
+        let status = SecRandomCopyBytes(kSecRandomDefault, array.count * MemoryLayout<Element>.stride, &array)
         
         guard status == errSecSuccess else {
             fatalError("Failed to generate secure random bytes: OSStatus \(status)")
