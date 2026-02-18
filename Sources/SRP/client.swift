@@ -165,7 +165,7 @@ public struct SRPClient<H: HashFunction> {
     ///   - password: user password
     /// - Returns: tuple containing salt and password verifier
     public func generateSaltAndVerifier(username: String, password: String) -> (salt: [UInt8], verifier: SRPKey) {
-        let salt = [UInt8].random(count: 16)
+        let salt = [UInt8].random(count: 32)
         let verifier = generatePasswordVerifier(username: username, password: password, salt: salt)
         return (salt: salt, verifier: SRPKey(verifier, padding: configuration.sizeN))
     }
