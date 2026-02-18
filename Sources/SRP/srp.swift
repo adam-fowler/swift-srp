@@ -1,6 +1,17 @@
 import BigNum
 import Crypto
 
+/// Constant-time comparison of two byte arrays.
+/// Prevents timing side-channels by always comparing every byte.
+func constantTimeEqual(_ a: [UInt8], _ b: [UInt8]) -> Bool {
+    guard a.count == b.count else { return false }
+    var result: UInt8 = 0
+    for i in 0..<a.count {
+        result |= a[i] ^ b[i]
+    }
+    return result == 0
+}
+
 /// Contains common code used by both client and server SRP code
 public struct SRP<H: HashFunction> {
     /// calculate u = H(clientPublicKey | serverPublicKey)
