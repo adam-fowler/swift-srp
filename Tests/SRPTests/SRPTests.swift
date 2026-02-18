@@ -41,13 +41,23 @@ final class SRPTests: XCTestCase {
         // Salts should be different (extremely high probability)
         XCTAssertNotEqual(salt1, salt2, "Different salt generations should produce different values")
         
-        // Verify salts contain non-zero values (they should be properly randomized)
-        let nonZeroCount1 = salt1.filter { $0 != 0 }.count
-        let nonZeroCount2 = salt2.filter { $0 != 0 }.count
+        // Verify salts are properly randomized (should not be all zeros or all same value)
+        let allZeros1 = salt1.allSatisfy { $0 == 0 }
+        let allZeros2 = salt2.allSatisfy { $0 == 0 }
+        let allSame1 = salt1.allSatisfy { $0 == salt1[0] }
+        let allSame2 = salt2.allSatisfy { $0 == salt2[0] }
         
-        // With cryptographically secure random, we expect most bytes to be non-zero
-        XCTAssertGreaterThan(nonZeroCount1, salt1.count / 2, "Salt should contain significant non-zero bytes")
-        XCTAssertGreaterThan(nonZeroCount2, salt2.count / 2, "Salt should contain significant non-zero bytes")
+        // With cryptographically secure random, we expect proper distribution
+        XCTAssertFalse(allZeros1, "Salt should not be all zeros")
+        XCTAssertFalse(allZeros2, "Salt should not be all zeros")
+        XCTAssertFalse(allSame1, "Salt should not be all the same value")
+        XCTAssertFalse(allSame2, "Salt should not be all the same value")
+        
+        // Check that we have a reasonable distribution of different byte values
+        let uniqueBytes1 = Set(salt1).count
+        let uniqueBytes2 = Set(salt2).count
+        XCTAssertGreaterThan(uniqueBytes1, salt1.count / 4, "Salt should have reasonable byte diversity")
+        XCTAssertGreaterThan(uniqueBytes2, salt2.count / 4, "Salt should have reasonable byte diversity")
     }
     
     func testKeyConversion() {
