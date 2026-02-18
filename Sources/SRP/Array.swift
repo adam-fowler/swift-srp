@@ -1,10 +1,16 @@
 
+import Security
+
 extension Array where Element: FixedWidthInteger {
-    /// create array of random bytes
+    /// create array of random bytes using cryptographically secure random number generation
     static func random(count: Int) -> [Element] {
-        var array = self.init()
-        for _ in 0 ..< count {
-            array.append(.random(in: Element.min ..< Element.max))
+        var array = [Element](repeating: 0, count: count)
+        let status = array.withUnsafeMutableBytes { buffer in
+            SecRandomCopyBytes(kSecRandomDefault, count * MemoryLayout<Element>.stride, buffer.baseAddress!)
+        }
+        
+        guard status == errSecSuccess else {
+            fatalError("Failed to generate secure random bytes: OSStatus \(status)")
         }
         return array
     }
