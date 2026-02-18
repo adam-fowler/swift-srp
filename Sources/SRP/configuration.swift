@@ -26,6 +26,7 @@ public struct SRPConfiguration<H: HashFunction> {
     ///   - N: Large prime
     ///   - g: multiplicative group generator (usually 2)
     public init(N: BigNum, g: BigNum) {
+        precondition(N.numBits() >= 2048, "N must be at least 2048 bits for adequate security")
         self.N = N
         sizeN = Int(self.N.numBits() + 7) / 8
         self.g = g
