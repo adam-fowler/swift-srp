@@ -94,7 +94,7 @@ public struct SRPServer<H: HashFunction> {
             serverPublicKey: serverPublicKey,
             hashSharedSecret: hashSharedSecret
         )
-        guard clientProof == proof else { throw SRPServerError.invalidClientProof }
+        guard constantTimeEqual(clientProof, proof) else { throw SRPServerError.invalidClientProof }
         return SRP<H>.calculateServerVerification(clientPublicKey: clientPublicKey, clientProof: clientProof, hashSharedSecret: hashSharedSecret)
     }
 
