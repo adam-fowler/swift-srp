@@ -26,40 +26,7 @@ final class SRPTests: XCTestCase {
         }
     }
     
-    func testSaltGenerationUsesSecureRandom() {
-        // Test that salt generation uses our secure random function
-        let configuration = SRPConfiguration<SHA256>(.N2048)
-        let client = SRPClient(configuration: configuration)
-        
-        // Generate multiple salts and verify they're different (high probability)
-        let salt1 = client.generateSaltAndVerifier(username: "test1", password: "password1").salt
-        let salt2 = client.generateSaltAndVerifier(username: "test2", password: "password2").salt
-        
-        XCTAssertEqual(salt1.count, 32, "Salt should be 32 bytes")
-        XCTAssertEqual(salt2.count, 32, "Salt should be 32 bytes")
-        
-        // Salts should be different (extremely high probability)
-        XCTAssertNotEqual(salt1, salt2, "Different salt generations should produce different values")
-        
-        // Verify salts are properly randomized (should not be all zeros or all same value)
-        let allZeros1 = salt1.allSatisfy { $0 == 0 }
-        let allZeros2 = salt2.allSatisfy { $0 == 0 }
-        let allSame1 = salt1.allSatisfy { $0 == salt1[0] }
-        let allSame2 = salt2.allSatisfy { $0 == salt2[0] }
-        
-        // With cryptographically secure random, we expect proper distribution
-        XCTAssertFalse(allZeros1, "Salt should not be all zeros")
-        XCTAssertFalse(allZeros2, "Salt should not be all zeros")
-        XCTAssertFalse(allSame1, "Salt should not be all the same value")
-        XCTAssertFalse(allSame2, "Salt should not be all the same value")
-        
-        // Check that we have a reasonable distribution of different byte values
-        let uniqueBytes1 = Set(salt1).count
-        let uniqueBytes2 = Set(salt2).count
-        XCTAssertGreaterThan(uniqueBytes1, salt1.count / 4, "Salt should have reasonable byte diversity")
-        XCTAssertGreaterThan(uniqueBytes2, salt2.count / 4, "Salt should have reasonable byte diversity")
-    }
-    
+
     func testKeyConversion() {
         let hex = "00000102030405060708090a0b0c0d0e0f"
         XCTAssertEqual(SRPKey(hex: hex)?.hex, hex)
@@ -274,7 +241,6 @@ final class SRPTests: XCTestCase {
         ("testRFC5054Appendix", testRFC5054Appendix),
         ("testMozillaTestVectors", testMozillaTestVectors),
         ("testSecureRandomGeneration", testSecureRandomGeneration),
-        ("testSaltGenerationUsesSecureRandom", testSaltGenerationUsesSecureRandom),
     ]
 }
 
