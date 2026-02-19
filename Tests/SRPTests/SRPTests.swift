@@ -209,6 +209,56 @@ final class SRPTests: XCTestCase {
         XCTAssertEqual([UInt8](clientProof).hexdigest(), "27949ec1e0f1625633436865edb037e23eb6bf5cb91873f2a2729373c2039008")
     }
 
+    func testConstantTimeEqual() {
+        // Test equal arrays
+        let array1: [UInt8] = [0x01, 0x02, 0x03, 0x04]
+        let array2: [UInt8] = [0x01, 0x02, 0x03, 0x04]
+        XCTAssertTrue(constantTimeEqual(array1, array2))
+
+        // Test unequal arrays
+        let array3: [UInt8] = [0x01, 0x02, 0x03, 0x04]
+        let array4: [UInt8] = [0x01, 0x02, 0x03, 0x05]
+        XCTAssertFalse(constantTimeEqual(array3, array4))
+
+        // Test different length arrays
+        let array5: [UInt8] = [0x01, 0x02, 0x03]
+        let array6: [UInt8] = [0x01, 0x02, 0x03, 0x04]
+        XCTAssertFalse(constantTimeEqual(array5, array6))
+
+        // Test empty arrays
+        let array7: [UInt8] = []
+        let array8: [UInt8] = []
+        XCTAssertTrue(constantTimeEqual(array7, array8))
+
+        // Test one empty array
+        let array9: [UInt8] = []
+        let array10: [UInt8] = [0x01]
+        XCTAssertFalse(constantTimeEqual(array9, array10))
+
+        // Test longer arrays
+        let array11: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        let array12: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        XCTAssertTrue(constantTimeEqual(array11, array12))
+
+        // Test longer arrays with one byte difference at end
+        var array13: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        let array14: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        array13[999] = 0xBB
+        XCTAssertFalse(constantTimeEqual(array13, array14))
+
+        // Test longer arrays with one byte difference at beginning
+        var array15: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        let array16: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        array15[0] = 0xBB
+        XCTAssertFalse(constantTimeEqual(array15, array16))
+
+        // Test longer arrays with one byte difference in middle
+        var array17: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        let array18: [UInt8] = Array(repeating: 0xAA, count: 1000)
+        array17[500] = 0xBB
+        XCTAssertFalse(constantTimeEqual(array17, array18))
+    }
+
     static var allTests = [
         ("testSRPSharedSecret", testSRPSharedSecret),
         ("testVerifySRP", testVerifySRP),
@@ -217,6 +267,7 @@ final class SRPTests: XCTestCase {
         ("testServerSessionProof", testServerSessionProof),
         ("testRFC5054Appendix", testRFC5054Appendix),
         ("testMozillaTestVectors", testMozillaTestVectors),
+        ("testConstantTimeEqual", testConstantTimeEqual),
     ]
 }
 
