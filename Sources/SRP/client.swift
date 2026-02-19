@@ -153,7 +153,7 @@ public struct SRPClient<H: HashFunction> {
         // get our version of server proof
         let HAMK = calculateServerProof(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
         // is it the same
-        guard serverProof == HAMK else { throw SRPClientError.invalidServerCode }
+        guard constantTimeEqual(serverProof, HAMK) else { throw SRPClientError.invalidServerCode }
     }
 
     /// Generate salt and password verifier from username and password. When creating your user instead of
