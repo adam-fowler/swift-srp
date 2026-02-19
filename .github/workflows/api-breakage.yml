@@ -21,5 +21,7 @@ jobs:
     - name: Mark the workspace as safe
       run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
     - name: API breaking changes
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run: |
-        swift package diagnose-api-breaking-changes origin/${GITHUB_BASE_REF}
+        swift package diagnose-api-breaking-changes "origin/${BASE_REF}"
