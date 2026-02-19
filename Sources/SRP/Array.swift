@@ -1,18 +1,4 @@
-
-import Security
-
 extension Array where Element: FixedWidthInteger {
-    /// create array of random bytes using cryptographically secure random number generation
-    static func random(count: Int) -> [Element] {
-        var array = [Element](repeating: 0, count: count)
-        let status = SecRandomCopyBytes(kSecRandomDefault, array.count * MemoryLayout<Element>.size, &array)
-        
-        guard status == errSecSuccess else {
-            fatalError("Failed to generate secure random bytes: OSStatus \(status)")
-        }
-        return array
-    }
-
     /// generate a hexdigest of the array of bytes
     func hexdigest() -> String {
         return map {
@@ -29,6 +15,18 @@ extension Array where Element == UInt8 {
         // create prefix and return prefix + data
         let prefix: [UInt8] = (1 ... padSize).reduce([]) { result, _ in result + [0] }
         return prefix + self
+    }
+    /// create array of random bytes using cryptographically secure random number generation
+    static func random(count: Int) -> [Element] {
+        var array = [Element]()
+        array.reserveCapacity(count)
+        var g = SystemRandomNumberGenerator()
+        var i = 0
+        while i < count {
+            array.append(Element.random(in: Element.min...Element.max, using: &g))
+            i += 1
+        }
+        return array
     }
 }
 
