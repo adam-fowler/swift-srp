@@ -6,16 +6,7 @@ extension Array where Element: FixedWidthInteger {
             return "\(characters[Int($0 >> 4)])\(characters[Int($0 & 0xF)])"
         }.joined()
     }
-}
 
-extension Array where Element == UInt8 {
-    func pad(to size: Int) -> [UInt8] {
-        let padSize = size - count
-        guard padSize > 0 else { return self }
-        // create prefix and return prefix + data
-        let prefix: [UInt8] = (1 ... padSize).reduce([]) { result, _ in result + [0] }
-        return prefix + self
-    }
     /// create array of random bytes using cryptographically secure random number generation
     static func random(count: Int) -> [Element] {
         var array = [Element]()
@@ -27,6 +18,16 @@ extension Array where Element == UInt8 {
             i += 1
         }
         return array
+    }
+}
+
+extension Array where Element == UInt8 {
+    func pad(to size: Int) -> [UInt8] {
+        let padSize = size - count
+        guard padSize > 0 else { return self }
+        // create prefix and return prefix + data
+        let prefix: [UInt8] = (1 ... padSize).reduce([]) { result, _ in result + [0] }
+        return prefix + self
     }
 }
 
