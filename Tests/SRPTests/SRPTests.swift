@@ -4,6 +4,29 @@ import Crypto
 import XCTest
 
 final class SRPTests: XCTestCase {
+    func testSecureRandomGeneration() {
+        // Test that random generation produces arrays of the correct size
+        let size1 = 16
+        let randomArray1 = [UInt8].random(count: size1)
+        XCTAssertEqual(randomArray1.count, size1, "Random array should have the requested size")
+        
+        let size2 = 32
+        let randomArray2 = [UInt8].random(count: size2)
+        XCTAssertEqual(randomArray2.count, size2, "Random array should have the requested size")
+        
+        // Test that random values are actually random (very unlikely to be the same)
+        let randomArray3 = [UInt8].random(count: 16)
+        let randomArray4 = [UInt8].random(count: 16)
+        XCTAssertNotEqual(randomArray3, randomArray4, "Random arrays should be different")
+        
+        // Test that all values are within valid UInt8 range
+        for byte in randomArray1 {
+            XCTAssertGreaterThanOrEqual(byte, UInt8.min)
+            XCTAssertLessThanOrEqual(byte, UInt8.max)
+        }
+    }
+    
+
     func testKeyConversion() {
         let hex = "00000102030405060708090a0b0c0d0e0f"
         XCTAssertEqual(SRPKey(hex: hex)?.hex, hex)
@@ -267,7 +290,8 @@ final class SRPTests: XCTestCase {
         ("testServerSessionProof", testServerSessionProof),
         ("testRFC5054Appendix", testRFC5054Appendix),
         ("testMozillaTestVectors", testMozillaTestVectors),
-        ("testConstantTimeEqual", testConstantTimeEqual),
+        ("testSecureRandomGeneration", testSecureRandomGeneration),
+        ("testConstantTimeEqual", testConstantTimeEqual)
     ]
 }
 
