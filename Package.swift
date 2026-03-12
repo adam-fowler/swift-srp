@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto", "1.0.0" ..< "5.0.0"),
-        .package(url: "https://github.com/adam-fowler/big-num", from: "2.0.0"),
+        .package(url: "https://github.com/adam-fowler/big-num", from: "2.0.3"),
     ],
     targets: [
         .target(name: "SRP", dependencies: ["BigNum", "Crypto"]),
