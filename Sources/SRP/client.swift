@@ -55,7 +55,8 @@ public struct SRPClient<H: HashFunction> {
         serverPublicKey: SRPKey
     ) throws -> SRPKey {
         let message = [UInt8]("\(username):\(password)".utf8)
-        return try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+        return try calculateSharedSecret(
+            message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
     }
 
     /// return shared secret given a binary password, B value and salt from the server
@@ -73,7 +74,8 @@ public struct SRPClient<H: HashFunction> {
         serverPublicKey: SRPKey
     ) throws -> SRPKey {
         let message = [0x3A] + password
-        return try calculateSharedSecret(message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+        return try calculateSharedSecret(
+            message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
     }
 
     /// Calculate proof of shared secret to send to server.
@@ -151,7 +153,8 @@ public struct SRPClient<H: HashFunction> {
         sharedSecret: SRPKey
     ) throws {
         // get our version of server proof
-        let HAMK = calculateServerProof(clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
+        let HAMK = calculateServerProof(
+            clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
         // is it the same
         guard constantTimeEqual(serverProof, HAMK) else { throw SRPClientError.invalidServerCode }
     }
@@ -163,9 +166,12 @@ public struct SRPClient<H: HashFunction> {
     /// - Parameters:
     ///   - username: username
     ///   - password: user password
+    ///   - length: Length of salt
     /// - Returns: tuple containing salt and password verifier
-    public func generateSaltAndVerifier(username: String, password: String) -> (salt: [UInt8], verifier: SRPKey) {
-        let salt = [UInt8].random(count: 32)
+    public func generateSaltAndVerifier(username: String, password: String, length: Int = 32) -> (
+        salt: [UInt8], verifier: SRPKey
+    ) {
+        let salt = [UInt8].random(count: length)
         let verifier = generatePasswordVerifier(username: username, password: password, salt: salt)
         return (salt: salt, verifier: SRPKey(verifier, padding: configuration.sizeN))
     }
@@ -178,7 +184,7 @@ public struct SRPClient<H: HashFunction> {
     }
 }
 
-public extension SRPClient {
+extension SRPClient {
     /// return shared secret given the message (username:password), salt from server, client keys, and B value
     internal func calculateSharedSecret(
         message: [UInt8],
@@ -186,29 +192,37 @@ public extension SRPClient {
         clientKeys: SRPKeyPair,
         serverPublicKey: SRPKey
     ) throws -> SRPKey {
-        guard serverPublicKey.number % configuration.N != BigNum(0) else { throw SRPClientError.nullServerKey }
+        guard serverPublicKey.number % configuration.N != BigNum(0) else {
+            throw SRPClientError.nullServerKey
+        }
 
         // calculate u = H(clientPublicKey | serverPublicKey)
-        let u = SRP<H>.calculateU(clientPublicKey: clientKeys.public.bytes, serverPublicKey: serverPublicKey.bytes)
+        let u = SRP<H>.calculateU(
+            clientPublicKey: clientKeys.public.bytes, serverPublicKey: serverPublicKey.bytes)
 
         guard u != 0 else { throw SRPClientError.nullServerKey }
 
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
 
         // calculate S = (B - k*g^x)^(a+u*x)
-        let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N)).power(clientKeys.private.number + u * x, modulus: configuration.N)
+        let S =
+            (serverPublicKey.number - configuration.k
+            * configuration.g.power(x, modulus: configuration.N)).power(
+                clientKeys.private.number + u * x, modulus: configuration.N)
 
         return SRPKey(S, padding: configuration.sizeN)
     }
 
     /// generate password verifier
-    func generatePasswordVerifier(username: String, password: String, salt: [UInt8]) -> BigNum {
+    public func generatePasswordVerifier(username: String, password: String, salt: [UInt8])
+        -> BigNum
+    {
         let message = "\(username):\(password)"
         return generatePasswordVerifier(message: [UInt8](message.utf8), salt: salt)
     }
 
     /// generate password verifier
-    func generatePasswordVerifier(message: [UInt8], salt: [UInt8]) -> BigNum {
+    public func generatePasswordVerifier(message: [UInt8], salt: [UInt8]) -> BigNum {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
         let verifier = configuration.g.power(x, modulus: configuration.N)
         return verifier
