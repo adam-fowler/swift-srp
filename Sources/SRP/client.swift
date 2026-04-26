@@ -166,12 +166,14 @@ public struct SRPClient<H: HashFunction> {
     /// - Parameters:
     ///   - username: username
     ///   - password: user password
-    ///   - length: Length of salt
+    ///   - saltLength: Length of salt
     /// - Returns: tuple containing salt and password verifier
-    public func generateSaltAndVerifier(username: String, password: String, length: Int = 32) -> (
-        salt: [UInt8], verifier: SRPKey
-    ) {
-        let salt = [UInt8].random(count: length)
+    public func generateSaltAndVerifier(
+        username: String,
+        password: String,
+        saltLength: Int = 32
+    ) -> (salt: [UInt8], verifier: SRPKey) {
+        let salt = [UInt8].random(count: saltLength)
         let verifier = generatePasswordVerifier(username: username, password: password, salt: salt)
         return (salt: salt, verifier: SRPKey(verifier, padding: configuration.sizeN))
     }
