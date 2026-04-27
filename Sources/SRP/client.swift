@@ -220,9 +220,8 @@ extension SRPClient {
         let x = BigNum(bytes: [UInt8](H.hash(data: salt + H.hash(data: message))))
 
         // calculate S = (B - k*g^x)^(a+u*x)
-        let S =
-            (serverPublicKey.number - configuration.k
-            * configuration.g.power(x, modulus: configuration.N)).power(
+        let S = (serverPublicKey.number - configuration.k * configuration.g.power(x, modulus: configuration.N))
+            .power(
                 clientKeys.private.number + u * x,
                 modulus: configuration.N
             )
