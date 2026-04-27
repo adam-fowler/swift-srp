@@ -56,7 +56,11 @@ public struct SRPClient<H: HashFunction> {
     ) throws -> SRPKey {
         let message = [UInt8]("\(username):\(password)".utf8)
         return try calculateSharedSecret(
-            message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+            message: message,
+            salt: salt,
+            clientKeys: clientKeys,
+            serverPublicKey: serverPublicKey
+        )
     }
 
     /// return shared secret given a binary password, B value and salt from the server
@@ -75,7 +79,11 @@ public struct SRPClient<H: HashFunction> {
     ) throws -> SRPKey {
         let message = [0x3A] + password
         return try calculateSharedSecret(
-            message: message, salt: salt, clientKeys: clientKeys, serverPublicKey: serverPublicKey)
+            message: message,
+            salt: salt,
+            clientKeys: clientKeys,
+            serverPublicKey: serverPublicKey
+        )
     }
 
     /// Calculate proof of shared secret to send to server.
@@ -154,7 +162,10 @@ public struct SRPClient<H: HashFunction> {
     ) throws {
         // get our version of server proof
         let HAMK = calculateServerProof(
-            clientPublicKey: clientPublicKey, clientProof: clientProof, sharedSecret: sharedSecret)
+            clientPublicKey: clientPublicKey,
+            clientProof: clientProof,
+            sharedSecret: sharedSecret
+        )
         // is it the same
         guard constantTimeEqual(serverProof, HAMK) else { throw SRPClientError.invalidServerCode }
     }
@@ -200,7 +211,9 @@ extension SRPClient {
 
         // calculate u = H(clientPublicKey | serverPublicKey)
         let u = SRP<H>.calculateU(
-            clientPublicKey: clientKeys.public.bytes, serverPublicKey: serverPublicKey.bytes)
+            clientPublicKey: clientKeys.public.bytes,
+            serverPublicKey: serverPublicKey.bytes
+        )
 
         guard u != 0 else { throw SRPClientError.nullServerKey }
 
@@ -210,13 +223,19 @@ extension SRPClient {
         let S =
             (serverPublicKey.number - configuration.k
             * configuration.g.power(x, modulus: configuration.N)).power(
-                clientKeys.private.number + u * x, modulus: configuration.N)
+                clientKeys.private.number + u * x,
+                modulus: configuration.N
+            )
 
         return SRPKey(S, padding: configuration.sizeN)
     }
 
     /// generate password verifier
-    public func generatePasswordVerifier(username: String, password: String, salt: [UInt8])
+    public func generatePasswordVerifier(
+        username: String,
+        password: String,
+        salt: [UInt8]
+    )
         -> BigNum
     {
         let message = "\(username):\(password)"
