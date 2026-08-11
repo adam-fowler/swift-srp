@@ -111,6 +111,18 @@ final class SRPTests: XCTestCase {
         testVerifySRP(configuration: SRPConfiguration<SHA384>(N: BigNum(37), g: BigNum(3)))
     }
 
+    func testVerifySRPWithoutGeneratorProofPadding() {
+        testVerifySRP(configuration: SRPConfiguration<SHA256>(.N2048, padGeneratorForProof: false))
+        testVerifySRP(configuration: SRPConfiguration<SHA384>(N: BigNum(37), g: BigNum(3), padGeneratorForProof: false))
+    }
+
+    func testGeneratorProofPaddingDoesNotChangeMultiplier() {
+        let padded = SRPConfiguration<SHA256>(.N2048)
+        let unpadded = SRPConfiguration<SHA256>(.N2048, padGeneratorForProof: false)
+
+        XCTAssertEqual(padded.k, unpadded.k)
+    }
+
     func testClientSessionProof() {
         // Cannot find the source for these test vectors so can't verify correctness
         let configuration = SRPConfiguration<Insecure.SHA1>(.N1024)
@@ -129,6 +141,25 @@ final class SRPTests: XCTestCase {
         )
 
         XCTAssertEqual(clientProof.hexdigest(), "2dbc18fd8bbb6574fd318e96fbc92c4c8dc8a5e8")
+    }
+
+    func testClientSessionProofWithoutGeneratorPadding() {
+        let configuration = SRPConfiguration<Insecure.SHA1>(.N1024, padGeneratorForProof: false)
+        let username = "alice"
+        let salt = "bafa3be2813c9326".bytes(using: .hexadecimal)!
+        let A = BigNum(hex: "b525e8fe2eac8f5da6b3220e66a0ab6f833a59d5f079fe9ddcdf111a22eaec95850374d9d7597f45497eb429bcde5057a450948de7d48edc034264916a01e6c0690e14b0a527f107d3207fd2214653c9162f5745e7cbeb19a550a072d4600ce8f4ef778f6d6899ba718adf0a462e7d981ed689de93ea1bda773333f23ebb4a9b")!
+        let B = BigNum(hex: "2bfc8559a022497f1254af3c76786b95cb0dfb449af15501aa51eefe78947d7ef06df4fcc07a899bcaae0e552ca72c7a1f3016f3ec357a86a1428dad9f98cb8a69d405404e57e9aaf01e51a46a73b3fc7bc1d212569e4a882ae6d878599e098c89033838ec069fe368a49461f531e5b4662700d56d8c252d0aea9da6abe9b014")!
+        let secret = "b6288955afd690a13686d65886b5f82018515df3".bytes(using: .hexadecimal)!
+        let clientProof = SRP<Insecure.SHA1>.calculateClientProof(
+            configuration: configuration,
+            username: username,
+            salt: salt,
+            clientPublicKey: SRPKey(A, padding: configuration.sizeN),
+            serverPublicKey: SRPKey(B, padding: configuration.sizeN),
+            hashSharedSecret: secret
+        )
+
+        XCTAssertEqual(clientProof.hexdigest(), "e4c5c2e145ea2de18d0cc1ac9dc2a0d0988706d6")
     }
 
     func testServerSessionProof() {

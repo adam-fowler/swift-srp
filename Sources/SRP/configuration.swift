@@ -11,13 +11,18 @@ public struct SRPConfiguration<H: HashFunction> {
     public let k: BigNum
     /// size in bytes of N
     public let sizeN: Int
+    /// Whether to pad g to the size of N before hashing it in the client proof
+    public let padGeneratorForProof: Bool
 
     /// Initialise SRPConfiguration with known safe prime
-    /// - Parameter prime: enum indicating size of prime
-    public init(_ prime: Prime) {
+    /// - Parameters:
+    ///   - prime: enum indicating size of prime
+    ///   - padGeneratorForProof: Whether to pad g to the size of N before hashing it in the client proof
+    public init(_ prime: Prime, padGeneratorForProof: Bool = true) {
         N = prime.group
         sizeN = Int(N.numBits() + 7) / 8
         g = prime.generator
+        self.padGeneratorForProof = padGeneratorForProof
         k = BigNum(bytes: [UInt8](H.hash(data: N.bytes + g.bytes.pad(to: sizeN))))
     }
 
@@ -25,10 +30,12 @@ public struct SRPConfiguration<H: HashFunction> {
     /// - Parameters:
     ///   - N: Large prime
     ///   - g: multiplicative group generator (usually 2)
-    public init(N: BigNum, g: BigNum) {
+    ///   - padGeneratorForProof: Whether to pad g to the size of N before hashing it in the client proof
+    public init(N: BigNum, g: BigNum, padGeneratorForProof: Bool = true) {
         self.N = N
         sizeN = Int(self.N.numBits() + 7) / 8
         self.g = g
+        self.padGeneratorForProof = padGeneratorForProof
         k = BigNum(bytes: [UInt8](H.hash(data: self.N.bytes + self.g.bytes.pad(to: sizeN))))
     }
 

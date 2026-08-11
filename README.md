@@ -12,6 +12,10 @@ First you create a configuration object. This will hold the hashing algorithm yo
 ```swift
 let configuration = SRPConfiguration<SHA256>(.N2048)
 ```
+By default, `g` is padded to the size of `N` before it is hashed in the client proof. Some implementations, including [srp.net](https://github.com/nickvdyck/srp.net), hash the minimal byte representation of `g` instead. Disable proof generator padding when interoperating with those implementations:
+```swift
+let configuration = SRPConfiguration<SHA256>(.N2048, padGeneratorForProof: false)
+```
 When the client wants to create a new user they generate a salt and password verifier for their username and password. 
 ```swift
 let client = SRPClient(configuration: configuration)
