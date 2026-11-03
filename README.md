@@ -94,3 +94,11 @@ The library is compliant with RFC5054 and should work with any server implementi
 ## Proof of shared secret
 
 For generating the client and server proofs of the shared secret I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) with everything padded out to the size of N, but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
+
+## Salt with a leading zero byte
+
+Heads up, this one bit us. swift-srp hashes the salt exactly as you hand it over, leading `0x00` and all. Some libraries don't. [tssrp6a](https://github.com/midonet/tssrp6a) 3.0.0 keeps the salt as a big integer, and when it turns that back into bytes to compute `x` it drops a leading zero. So a 16 byte salt that starts with `0x00` gets hashed as 15 bytes on the tssrp6a side. The two sides end up with different `x` values, and login just fails. No error, nothing useful to go on.
+
+About 1 random salt in 256 starts with `0x00`, so it looks like a random, hard-to-reproduce failure. It's a compatibility trap, not a security hole.
+
+If you're pairing swift-srp with a library that holds the salt as a big integer, make both sides hash the same bytes (normalize the salt on your end), and test with a salt that starts with `0x00` so you catch it early. There's a small repro for tssrp6a here: https://github.com/IceIncResearch/srp-salt-leading-zero-repro
