@@ -97,8 +97,6 @@ For generating the client and server proofs of the shared secret I use the metho
 
 ## Salt with a leading zero byte
 
-swift-srp hashes the salt exactly as you hand it over, leading `0x00` and all. As we read RFC 5054, that's how `x` is meant to be computed: from the salt as it was sent. Some other implementations don't do that. [tssrp6a](https://github.com/midonet/tssrp6a) 3.0.0 keeps the salt as a big integer, and when it turns it back into bytes to compute `x` it drops a leading zero (reported here: https://github.com/midonet/tssrp6a/issues/95). So a 16 byte salt that starts with `0x00` gets hashed as 15 bytes on the tssrp6a side. The two sides end up with different `x` values, and login fails with no error.
+swift-srp hashes the salt exactly as you hand it over, leading `0x00` and all. As we read RFC 5054, that's how `x` is meant to be computed: from the salt as it was sent. Some other implementations don't do that. [tssrp6a](https://github.com/midonet/tssrp6a) 3.0.0 keeps the salt as a big integer, and when it turns it back into bytes to compute `x` it drops any leading zeros. So a 16 byte salt that starts with `0x00` gets hashed as 15 bytes on the tssrp6a side. The two sides end up with different `x` values, and login fails with no error.
 
-About 1 random salt in 256 starts with `0x00`, so it looks like a random, hard-to-reproduce failure. As far as we can tell it's an availability problem, not a security hole.
-
-If you control the server, the better fix is there: keep the salt as bytes. If you can't change the server, you can make the client match it by running the salt through the same big-integer round trip before hashing. That client will then only work with servers that behave the same way, so keep that workaround tied to that server. Either way, test with a salt that starts with `0x00`. A small repro for tssrp6a: https://github.com/IceIncResearch/srp-salt-leading-zero-repro
+If you can't change the server, you can make the client match it by running the salt through the same big-integer round trip before hashing. That client will then only work with servers that behave the same way, so keep that workaround tied to that server.
