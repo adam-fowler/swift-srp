@@ -94,3 +94,9 @@ The library is compliant with RFC5054 and should work with any server implementi
 ## Proof of shared secret
 
 For generating the client and server proofs of the shared secret I use the method detailed in [RFC2945](https://tools.ietf.org/html/rfc2945#section-3) with everything padded out to the size of N, but not all servers use this method. For this reason I have kept the sharedSecret generation separate from the proof generation, so you can insert your own version. 
+
+## Salt with a leading zero byte
+
+swift-srp hashes the salt exactly as you hand it over, leading `0x00` and all. As we read RFC 5054, that's how `x` is meant to be computed: from the salt as it was sent. Some other implementations don't do that. [tssrp6a](https://github.com/midonet/tssrp6a) 3.0.0 keeps the salt as a big integer, and when it turns it back into bytes to compute `x` it drops any leading zeros. So a 16 byte salt that starts with `0x00` gets hashed as 15 bytes on the tssrp6a side. The two sides end up with different `x` values, and login fails with no error.
+
+If you can't change the server, you can make the client match it by running the salt through the same big-integer round trip before hashing. That client will then only work with servers that behave the same way, so keep that workaround tied to that server.
